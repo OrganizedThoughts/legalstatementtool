@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Legal Statement Organizer</title>
+<title>AI Legal Statement Organizer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -10,233 +10,141 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-/* ---------- Base Styles ---------- */
 body {
 font-family: 'Inter', Arial, sans-serif;
-margin: 0;
-padding: 20px;
+margin: 0; padding: 20px;
 background: linear-gradient(120deg, #f4f6f8, #e3f2fd, #f0f9ff);
 background-size: 600% 600%;
 animation: gradientShift 20s ease infinite;
 color: #333;
 }
-
 @keyframes gradientShift {
 0% {background-position:0% 50%;}
 50% {background-position:100% 50%;}
 100% {background-position:0% 50%;}
 }
-
 .container {
-max-width: 750px;
-margin: auto;
-background: white;
-padding: 30px 25px;
-border-radius: 12px;
-box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-transform: translateY(0px);
-transition: transform 0.3s ease, box-shadow 0.3s ease;
+max-width: 750px; margin:auto; background:white; padding:30px 25px;
+border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1);
+transform: translateY(0px); transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-.container:hover {
-transform: translateY(-5px);
-box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-}
-
-h2 {
-color: #1f6feb;
-font-weight: 600;
-text-align: center;
-margin-bottom: 20px;
-}
-
-label {
-font-weight: 600;
-display: block;
-margin-bottom: 5px;
-}
-
+.container:hover { transform: translateY(-5px); box-shadow:0 12px 24px rgba(0,0,0,0.15); }
+h2 { color:#1f6feb; font-weight:600; text-align:center; margin-bottom:20px; }
+label { font-weight:600; display:block; margin-bottom:5px; }
 input, textarea, select {
-width: 100%;
-padding: 12px;
-margin-bottom: 20px;
-border-radius: 8px;
-border: 1px solid #ccc;
-transition: border 0.3s, box-shadow 0.3s;
-font-size: 15px;
+width:100%; padding:12px; margin-bottom:20px;
+border-radius:8px; border:1px solid #ccc; transition:border 0.3s, box-shadow 0.3s;
+font-size:15px;
 }
-
 input:focus, textarea:focus, select:focus {
-border-color: #1f6feb;
-box-shadow: 0 0 10px rgba(31,111,235,0.2);
-outline: none;
+border-color:#1f6feb; box-shadow:0 0 10px rgba(31,111,235,0.2); outline:none;
 }
-
 button {
-padding: 14px;
-width: 100%;
-background: #1f6feb;
-color: white;
-border: none;
-font-size: 16px;
-border-radius: 8px;
-cursor: pointer;
-transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+padding:14px; width:100%; background:#1f6feb; color:white; border:none;
+font-size:16px; border-radius:8px; cursor:pointer;
+transition:background 0.3s, transform 0.2s, box-shadow 0.3s;
 }
-
-button:hover {
-background: #155bcf;
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
+button:hover { background:#155bcf; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.1); }
 .output {
-white-space: pre-wrap;
-background: #f9f9f9;
-padding: 15px;
-margin-top: 20px;
-border-radius: 8px;
-border: 1px solid #e0e0e0;
-user-select: none; /* Prevent copy */
+white-space: pre-wrap; background:#f9f9f9; padding:15px;
+margin-top:20px; border-radius:8px; border:1px solid #e0e0e0;
+user-select:none;
 }
-
-.notice {
-font-size: 13px;
-color: #555;
-margin-bottom: 20px;
-}
-
+.notice { font-size:13px; color:#555; margin-bottom:20px; }
 .paywall {
-background: #fff3cd;
-border-left: 5px solid #ffeeba;
-border-radius: 8px;
-padding: 20px;
-margin-top: 25px;
-box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px;
+padding:20px; margin-top:25px; box-shadow:0 3px 6px rgba(0,0,0,0.05);
 animation: pulse 2s infinite;
 }
-
 @keyframes pulse {
-0% { box-shadow: 0 3px 6px rgba(0,0,0,0.05); }
-50% { box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-100% { box-shadow: 0 3px 6px rgba(0,0,0,0.05); }
+0% {box-shadow:0 3px 6px rgba(0,0,0,0.05);}
+50% {box-shadow:0 6px 12px rgba(0,0,0,0.1);}
+100% {box-shadow:0 3px 6px rgba(0,0,0,0.05);}
 }
-
-/* Section dividers & fade-in */
-.section {
-border-bottom: 1px solid #e0e0e0;
-padding-bottom: 15px;
-margin-bottom: 20px;
-opacity: 0;
-animation: fadeIn 1s forwards;
+.section { border-bottom:1px solid #e0e0e0; padding-bottom:15px; margin-bottom:20px;
+opacity:0; animation:fadeIn 1s forwards;
 }
-
-.section:nth-child(1) { animation-delay: 0.2s; }
-.section:nth-child(2) { animation-delay: 0.4s; }
-.section:nth-child(3) { animation-delay: 0.6s; }
-
-@keyframes fadeIn {
-to { opacity: 1; }
-}
-
-/* Icons */
-label::before {
-content: "📝 ";
-display: inline-block;
-margin-right: 4px;
-transition: transform 0.3s, color 0.3s;
-}
-
-label:hover::before {
-transform: scale(1.2);
-color: #1f6feb;
-}
+.section:nth-child(1){animation-delay:0.2s;} .section:nth-child(2){animation-delay:0.4s;} .section:nth-child(3){animation-delay:0.6s;}
+@keyframes fadeIn { to { opacity:1; } }
+label::before { content:"📝 "; display:inline-block; margin-right:4px; transition:transform 0.3s, color 0.3s; }
+label:hover::before { transform:scale(1.2); color:#1f6feb; }
 </style>
 </head>
 
 <body>
 <div class="container">
-<h2>Legal Statement Organizer</h2>
+<h2>AI Legal Statement Organizer</h2>
 
 <p class="notice">
-This tool helps organize your own words into a clear written statement for communication with a lawyer or court.
-It does <strong>not</strong> provide legal advice and does not replace an attorney.
+Organize and professionally polish your statements automatically. This is <strong>not legal advice</strong>.
 </p>
 
 <div class="section">
 <label>Your Full Legal Name</label>
 <input id="name">
-
 <label>State (optional)</label>
 <input id="state" placeholder="e.g., New York">
-
 <label>Type of Matter</label>
 <select id="matter">
-<option>Family Court</option>
-<option>Custody / Visitation</option>
-<option>Child Support</option>
-<option>Divorce</option>
-<option>Landlord / Tenant</option>
-<option>Civil Matter</option>
-<option>Other Legal Matter</option>
+<option>Family Court</option><option>Custody / Visitation</option><option>Child Support</option>
+<option>Divorce</option><option>Landlord / Tenant</option><option>Civil Matter</option><option>Other Legal Matter</option>
 </select>
-
 <label>Who is this statement for?</label>
 <select id="recipient">
-<option>My Attorney</option>
-<option>The Court</option>
-<option>Both</option>
+<option>My Attorney</option><option>The Court</option><option>Both</option>
 </select>
 </div>
 
 <div class="section">
 <label>Chronological Summary of Events (facts only)</label>
 <textarea id="facts" rows="5"></textarea>
-
 <label>Key Concerns or Issues</label>
 <textarea id="concerns" rows="4"></textarea>
-
 <label>What outcome or clarification are you requesting?</label>
 <textarea id="request" rows="3"></textarea>
 </div>
 
-<button onclick="generate()">Generate Preview</button>
+<button onclick="generate()">Generate AI Preview</button>
 
 <div id="preview" class="output"></div>
 
 <div id="paywall" class="paywall" style="display:none;">
-<p><strong>Unlock Full Statement PDF</strong></p>
+<p><strong>Unlock Full AI-Polished PDF</strong></p>
 <p>One-time fee: <strong>$10</strong></p>
-<p>
-<a href="https://www.paypal.me/YOURPAYPAL/10" target="_blank">
-👉 Pay to Unlock
-</a>
-</p>
+<p><a href="YOUR_PAYPAL_LINK" target="_blank">👉 Pay to Unlock</a></p>
 <p>After payment, click below to download your PDF.</p>
 <button onclick="downloadPDF()">Download PDF</button>
 </div>
-
 </div>
 
 <script>
 let finalText = "";
 
-function generate() {
-const name = document.getElementById("name").value || "[Name]";
-const state = document.getElementById("state").value || "the applicable jurisdiction";
-const matter = document.getElementById("matter").value;
-const recipient = document.getElementById("recipient").value;
-const facts = document.getElementById("facts").value || "[Summary of events]";
-const concerns = document.getElementById("concerns").value || "[Key concerns]";
-const request = document.getElementById("request").value || "[Requested outcome]";
+// AI rewrite function pointing to your serverless endpoint
+async function rewriteStatement(rawText){
+const response = await fetch(https://legalstatementtool-organized-thoughts.vercel.app/api/rewrite, {
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body: JSON.stringify({ text: rawText })
+});
+const data = await response.json();
+return data.polishedText;
+}
 
-finalText = `
-STATEMENT FOR LEGAL COMMUNICATION
+async function generate(){
+const name=document.getElementById("name").value||"[Name]";
+const state=document.getElementById("state").value||"the applicable jurisdiction";
+const matter=document.getElementById("matter").value;
+const recipient=document.getElementById("recipient").value;
+const facts=document.getElementById("facts").value||"[Summary of events]";
+const concerns=document.getElementById("concerns").value||"[Key concerns]";
+const request=document.getElementById("request").value||"[Requested outcome]";
 
+const rawText = `
 Name: ${name}
-State / Jurisdiction: ${state}
+State: ${state}
 Matter Type: ${matter}
-Intended Recipient: ${recipient}
+Recipient: ${recipient}
 
 SUMMARY OF EVENTS:
 ${facts}
@@ -244,38 +152,34 @@ ${facts}
 KEY CONCERNS:
 ${concerns}
 
-REQUEST / PURPOSE OF THIS STATEMENT:
+REQUEST / PURPOSE:
 ${request}
+`;
+
+const polishedText = await rewriteStatement(rawText);
+
+finalText = polishedText + `
 
 Respectfully submitted,
-
 ${name}
 _________________________
 Date: ${new Date().toLocaleDateString()}
 `;
 
-// Show truncated preview to protect full content
-document.getElementById("preview").innerText =
-finalText.substring(0, 150) + "\n\n--- Preview Only ---";
-document.getElementById("paywall").style.display = "block";
+// Truncated preview for protection
+document.getElementById("preview").innerText = finalText.substring(0,150)+"\n\n--- Preview Only ---";
+document.getElementById("paywall").style.display="block";
 }
 
-function downloadPDF() {
+function downloadPDF(){
 const { jsPDF } = window.jspdf;
-const doc = new jsPDF({ unit: "pt", format: "letter" });
-const margin = 40;
-let y = margin;
-
-doc.setFontSize(16);
-doc.setFont(undefined, 'bold');
-doc.text("STATEMENT FOR LEGAL COMMUNICATION", margin, y);
-y += 30;
-
-doc.setFontSize(12);
-doc.setFont(undefined, 'normal');
-const lines = doc.splitTextToSize(finalText, 520); // wrap text
-lines.forEach(line => { doc.text(line, margin, y); y += 18; });
-
+const doc = new jsPDF({ unit:"pt", format:"letter" });
+const margin = 40; let y = margin;
+doc.setFontSize(16); doc.setFont(undefined,'bold');
+doc.text("STATEMENT FOR LEGAL COMMUNICATION", margin, y); y+=30;
+doc.setFontSize(12); doc.setFont(undefined,'normal');
+const lines=doc.splitTextToSize(finalText,520);
+lines.forEach(line=>{ doc.text(line, margin, y); y+=18; });
 doc.save("legal-statement.pdf");
 }
 </script>
