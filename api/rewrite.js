@@ -5,15 +5,12 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  const origin = req.headers.origin;
-
-  if (origin === "https://organizedthoughts.github.io") {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
+  // 🔴 MUST BE FIRST
+  res.setHeader("Access-Control-Allow-Origin", "https://organizedthoughts.github.io");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // 🔴 Preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -47,9 +44,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       polishedText: completion.choices[0].message.content
     });
-
   } catch (err) {
-    console.error("AI ERROR:", err);
+    console.error(err);
     return res.status(500).json({ error: "AI processing failed" });
   }
 }
