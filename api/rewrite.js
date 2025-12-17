@@ -1,52 +1,55 @@
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 export default async function handler(req, res) {
-res.setHeader("Access-Control-Allow-Origin", "*");
-res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  const origin = req.headers.origin;
 
-if (req.method === "OPTIONS") {
-return res.status(200).end();
-}
+  if (origin === "https://organizedthoughts.github.io") {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
 
-if (req.method !== "POST") {
-return res.status(405).json({ error: "Method not allowed" });
-}
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-try {
-const { text } = req.body;
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
-if (!text) {
-return res.status(400).json({ error: "No text provided" });
-}
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-const completion = await openai.chat.completions.create({
-model: "gpt-4.1-mini",
-messages: [
-{
-role: "system",
-content:
-"You are a legal writing assistant. Rewrite the user's content into a clear, neutral, well-organized legal statement suitable for court or attorney communication. Do not give legal advice."
-},
-{
-role: "user",
-content: text
-}
-]
-});
+  try {
+    const { text } = req.body;
 
-return res.status(200).json({
-polishedText: completion.choices[0].message.content
-});
+    if (!text) {
+      return res.status(400).json({ error: "No text provided" });
+    }
 
-} catch (err) {
-console.error("AI ERROR:", err);
-return res.status(500).json({
-error: "AI processing failed"
-});
-}
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a legal writing assistant. Rewrite the user's content into a clear, neutral, well-organized legal statement suitable for court or attorney communication. Do not give legal advice."
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ]
+    });
+
+    return res.status(200).json({
+      polishedText: completion.choices[0].message.content
+    });
+
+  } catch (err) {
+    console.error("AI ERROR:", err);
+    return res.status(500).json({ error: "AI processing failed" });
+  }
 }
