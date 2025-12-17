@@ -1,3 +1,9 @@
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+apiKey: process.env.OPENAI_API_KEY
+});
+
 export default async function handler(req, res) {
 res.setHeader("Access-Control-Allow-Origin", "*");
 res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -7,23 +13,40 @@ if (req.method === "OPTIONS") {
 return res.status(200).end();
 }
 
+if (req.method !== "POST") {
+return res.status(405).json({ error: "Method not allowed" });
+}
+
 try {
-// 🔍 Check if key exists
-const keyExists = !!process.env.OPENAI_API_KEY;
+const { text } = req.body;
+
+if (!text) {
+return res.status(400).json({ error: "No text provided" });
+}
+
+const completion = await openai.chat.completions.create({
+model: "gpt-4.1-mini",
+messages: [
+{
+role: "system",
+content:
+"You are a legal writing assistant. Rewrite the user's content into a clear, neutral, well-organized legal statement suitable for court or attorney communication. Do not give legal advice."
+},
+{
+role: "user",
+content: text
+}
+]
+});
 
 return res.status(200).json({
-success: true,
-message: "API reached successfully",
-openaiKeyPresent: keyExists,
-keyStartsWithSk: keyExists
-? process.env.OPENAI_API_KEY.startsWith("sk-")
-: false
+polishedText: completion.choices[0].message.content
 });
 
 } catch (err) {
+console.error("AI ERROR:", err);
 return res.status(500).json({
-error: "Server crashed",
-details: err.message
+error: "AI processing failed"
 });
 }
 }
