@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = await req.json(); // ✅ Vercel requires this
+    const body = await req.json(); // Vercel requires await req.json()
     const { text } = body;
 
     if (!text) return res.status(400).json({ error: "No text provided" });
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ result: completion.choices[0].message.content });
   } catch (error) {
-    console.error(error); // check logs in Vercel
+    console.error(error); // Check logs in Vercel
     res.status(500).json({ error: "AI failed", details: error.message });
   }
 }
