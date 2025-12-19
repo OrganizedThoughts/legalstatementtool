@@ -2,56 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Legal Statement Organizer</title>
+<title>AI Legal Statement Organizer - Format Test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-body {
-  font-family: 'Inter', Arial, sans-serif;
-  margin: 0; padding: 20px;
-  background: linear-gradient(120deg, #f4f6f8, #e3f2fd, #f0f9ff);
-  background-size: 600% 600%;
-  animation: gradientShift 20s ease infinite;
-  color: #333;
-}
-@keyframes gradientShift {
-  0% {background-position:0% 50%;}
-  50% {background-position:100% 50%;}
-  100% {background-position:0% 50%;}
-}
-.container {
-  max-width: 750px; margin:auto; background:white; padding:30px 25px;
-  border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1);
-}
+body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background: #f0f9ff; color: #333; }
+.container { max-width: 750px; margin:auto; background:white; padding:30px 25px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1); }
 h2 { color:#1f6feb; font-weight:600; text-align:center; margin-bottom:20px; }
 label { font-weight:600; display:block; margin-bottom:5px; }
-input, textarea, select {
-  width:100%; padding:12px; margin-bottom:20px;
-  border-radius:8px; border:1px solid #ccc; font-size:15px;
-}
-input:focus, textarea:focus, select:focus {
-  border-color:#1f6feb; box-shadow:0 0 10px rgba(31,111,235,0.2); outline:none;
-}
-button {
-  padding:14px; width:100%; background:#1f6feb; color:white; border:none;
-  font-size:16px; border-radius:8px; cursor:pointer;
-}
+input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
+button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
-.output {
-  white-space: pre-wrap; background:#f9f9f9; padding:15px;
-  margin-top:20px; border-radius:8px; border:1px solid #e0e0e0;
-  user-select:none;
-}
-.paywall {
-  background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px;
-  padding:20px; margin-top:25px;
-}
+.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; }
+.paywall { background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px; padding:20px; margin-top:25px; }
 </style>
 </head>
 <body>
 <div class="container">
-<h2>AI Legal Statement Organizer</h2>
+<h2>AI Legal Statement Organizer (Format Test)</h2>
 
 <div>
 <label>📝 Your Full Legal Name</label>
@@ -86,7 +55,6 @@ button:hover { background:#155bcf; }
 </div>
 
 <button onclick="generate()">Generate AI Preview</button>
-
 <div id="preview" class="output"></div>
 
 <div id="paywall" class="paywall" style="display:none;">
@@ -173,12 +141,15 @@ function downloadPDF(){
   doc.setFontSize(12);
   doc.setFont(undefined,'normal');
 
-  const lines = doc.splitTextToSize(window.finalText, 520);
-  lines.forEach(line => { doc.text(line, margin, y); y += 18; });
+  const paragraphs = window.finalText.split(/\n\s*\n/);
+  paragraphs.forEach(paragraph => {
+    const lines = doc.splitTextToSize("    " + paragraph.trim(), 520); // Indent
+    lines.forEach(line => { doc.text(line, margin, y); y += 18; });
+    y += 12; // extra spacing between paragraphs
+  });
 
   doc.save("legal-statement.pdf");
 }
 </script>
 </body>
 </html>
-
