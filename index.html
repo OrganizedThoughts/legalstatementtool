@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <title>AI Legal Statement Organizer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
 body {
   font-family: 'Inter', Arial, sans-serif;
@@ -51,7 +49,6 @@ button:hover { background:#155bcf; }
 }
 </style>
 </head>
-
 <body>
 <div class="container">
 <h2>AI Legal Statement Organizer</h2>
@@ -102,24 +99,20 @@ button:hover { background:#155bcf; }
 </div>
 
 <script>
-// Call Vercel API
 async function rewriteStatement(text) {
-  const response = await fetch("/api/rewrite", { // ✅ same-origin
+  const response = await fetch("/api/rewrite", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text })
   });
-
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error || "Failed to fetch AI");
   }
-
   const data = await response.json();
   return data.result;
 }
 
-// Generate AI preview
 async function generate(){
   const name = document.getElementById("name").value || "[Name]";
   const state = document.getElementById("state").value || "the applicable jurisdiction";
@@ -166,7 +159,6 @@ Date: ${new Date().toLocaleDateString()}
   }
 }
 
-// Download PDF
 function downloadPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
