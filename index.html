@@ -15,7 +15,6 @@ input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-r
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
 .output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; }
-.paywall { background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px; padding:20px; margin-top:25px; }
 </style>
 </head>
 <body>
@@ -57,15 +56,6 @@ button:hover { background:#155bcf; }
 <button onclick="generate()">Generate AI Preview</button>
 <div id="preview" class="output"></div>
 
-<div id="paywall" class="paywall" style="display:none;">
-  <p><strong>Unlock Full AI-Polished PDF</strong></p>
-  <p>One-time fee: <strong>$10</strong></p>
-  <p><a href="YOUR_PAYPAL_LINK" target="_blank">👉 Pay to Unlock</a></p>
-  <p>After payment, click below to download your PDF.</p>
-  <button onclick="downloadPDF()">Download PDF</button>
-</div>
-</div>
-
 <script>
 async function rewriteStatement(text) {
   const response = await fetch("/api/rewrite", {
@@ -74,14 +64,13 @@ async function rewriteStatement(text) {
     body: JSON.stringify({ text })
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to fetch AI");
+    throw new Error("AI failed");
   }
   const data = await response.json();
   return data.result;
 }
 
-async function generate(){
+async function generate() {
   const name = document.getElementById("name").value || "[Name]";
   const state = document.getElementById("state").value || "the applicable jurisdiction";
   const matter = document.getElementById("matter").value;
@@ -108,7 +97,6 @@ ${request}
 
   try {
     const polishedText = await rewriteStatement(rawText);
-
     window.finalText = polishedText + `
 
 Respectfully submitted,
@@ -116,51 +104,42 @@ ${name}
 _________________________
 Date: ${new Date().toLocaleDateString()}
 `;
-
     document.getElementById("preview").innerText =
       window.finalText.substring(0, 150) + "\n\n--- Preview Only ---";
-
-    document.getElementById("paywall").style.display = "block";
   } catch (err) {
-    alert("AI generation failed: " + err.message);
-    console.error(err);
+    alert(err.message);
   }
 }
 
-function downloadPDF(){
+function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
+  let y = 40;
   const margin = 40;
-  let y = margin;
 
   doc.setFontSize(16);
-  doc.setFont(undefined,'bold');
+  doc.setFont(undefined, "bold");
   doc.text("STATEMENT FOR LEGAL COMMUNICATION", margin, y);
   y += 30;
 
   doc.setFontSize(12);
-  doc.setFont(undefined,'normal');
+  doc.setFont(undefined, "normal");
 
   const paragraphs = window.finalText.split(/\n\s*\n/);
   paragraphs.forEach(paragraph => {
-    const lines = doc.splitTextToSize("    " + paragraph.trim(), 520); // Indent paragraph
+    const trimmed = paragraph.trim();
+    if (!trimmed) return;
+    let isHeading = /SUMMARY OF EVENTS:|KEY CONCERNS:|REQUEST \/ PURPOSE:/.test(trimmed);
+    if (isHeading) doc.setFont(undefined, "bold");
+    const lines = doc.splitTextToSize("    " + trimmed, 520);
     lines.forEach(line => { doc.text(line, margin, y); y += 18; });
-
-    // Make headings bold
-    if (paragraph.includes("SUMMARY OF EVENTS:") || paragraph.includes("KEY CONCERNS:") || paragraph.includes("REQUEST / PURPOSE:")) {
-      doc.setFont(undefined,'bold');
-      const headingLines = doc.splitTextToSize(paragraph.trim(), 520);
-      headingLines.forEach(line => { doc.text(line, margin, y); y += 18; });
-      doc.setFont(undefined,'normal');
-      y += 12;
-    } else {
-      y += 12;
-    }
+    if (isHeading) doc.setFont(undefined, "normal");
+    y += 12;
   });
 
   doc.save("legal-statement.pdf");
 }
 </script>
+</div>
 </body>
 </html>
-
