@@ -1,23 +1,14 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 export default async function handler(req, res) {
-  // ✅ CORS headers ALWAYS first
+  // ✅ CORS HEADERS (THIS FIXES YOUR ERROR)
   res.setHeader("Access-Control-Allow-Origin", "https://organizedthoughts.github.io");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // ✅ Preflight
+  // ✅ Handle preflight request
   if (req.method === "OPTIONS") {
     return res.status(200).end();
-  }
-
-  // ✅ Allow GET for sanity check
-  if (req.method === "GET") {
-    return res.status(200).json({ status: "API is alive" });
   }
 
   if (req.method !== "POST") {
@@ -25,37 +16,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Body safety
-    if (!req.body) {
-      return res.status(400).json({ error: "Missing request body" });
-    }
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const { text } = req.body;
 
-    if (!text) {
-      return res.status(400).json({ error: "No text provided" });
-    }
-
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a legal writing assistant. Rewrite the user's content into a clear, neutral, well-organized legal statement suitable for court or attorney communication. Do not give legal advice."
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ]
+        { role: "system", content: "Rewrite the following legal statement clearly." },
+        { role: "user", content: text }
+      ],
     });
 
-    return res.status(200).json({
-      polishedText: completion.choices[0].message.content
+    res.status(200).json({
+      result: completion.choices[0].message.content,
     });
-  } catch (err) {
-    console.error("SERVER ERROR:", err);
-    return res.status(500).json({ error: "Internal server error" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "AI failed" });
   }
 }
