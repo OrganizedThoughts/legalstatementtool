@@ -143,9 +143,19 @@ function downloadPDF(){
 
   const paragraphs = window.finalText.split(/\n\s*\n/);
   paragraphs.forEach(paragraph => {
-    const lines = doc.splitTextToSize("    " + paragraph.trim(), 520); // Indent
+    const lines = doc.splitTextToSize("    " + paragraph.trim(), 520); // Indent paragraph
     lines.forEach(line => { doc.text(line, margin, y); y += 18; });
-    y += 12; // extra spacing between paragraphs
+
+    // Make headings bold
+    if (paragraph.includes("SUMMARY OF EVENTS:") || paragraph.includes("KEY CONCERNS:") || paragraph.includes("REQUEST / PURPOSE:")) {
+      doc.setFont(undefined,'bold');
+      const headingLines = doc.splitTextToSize(paragraph.trim(), 520);
+      headingLines.forEach(line => { doc.text(line, margin, y); y += 18; });
+      doc.setFont(undefined,'normal');
+      y += 12;
+    } else {
+      y += 12;
+    }
   });
 
   doc.save("legal-statement.pdf");
@@ -153,3 +163,4 @@ function downloadPDF(){
 </script>
 </body>
 </html>
+
