@@ -200,23 +200,22 @@ button:hover { background:#155bcf; }
 
 // Function to call your AI serverless endpoint
 
-async function rewriteStatement(rawText){
-
-  const response = await fetch("https://legalstatementtool.vercel.app/api/rewrite", {
-
-    method:"POST",
-
-    headers:{ "Content-Type": "application/json" },
-
-    body: JSON.stringify({ text: rawText })
-
-  });
+async function rewriteStatement(text) {
+  const response = await fetch(
+    "https://legalstatementtool.vercel.app/api/rewrite",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text })
+    }
+  );
 
   const data = await response.json();
-
-  return data.polishedText;
-
+  return data.result;
 }
+
 
 
 
