@@ -63,9 +63,7 @@ async function rewriteStatement(text) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text })
   });
-  if (!response.ok) {
-    throw new Error("AI failed");
-  }
+  if (!response.ok) throw new Error("AI failed");
   const data = await response.json();
   return data.result;
 }
@@ -114,8 +112,8 @@ Date: ${new Date().toLocaleDateString()}
 function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
-  let y = 40;
   const margin = 40;
+  let y = 40;
 
   doc.setFontSize(16);
   doc.setFont(undefined, "bold");
@@ -123,21 +121,18 @@ function downloadPDF() {
   y += 30;
 
   doc.setFontSize(12);
-  doc.setFont(undefined, "normal");
-
   const paragraphs = window.finalText.split(/\n\s*\n/);
+
   paragraphs.forEach(paragraph => {
     const trimmed = paragraph.trim();
     if (!trimmed) return;
-    let isHeading = /SUMMARY OF EVENTS:|KEY CONCERNS:|REQUEST \/ PURPOSE:/.test(trimmed);
-    if (isHeading) doc.setFont(undefined, "bold");
-    const lines = doc.splitTextToSize("    " + trimmed, 520);
+    // Bold headings
+    const isHeading = /SUMMARY OF EVENTS:|KEY CONCERNS:|REQUEST \/ PURPOSE:/.test(trimmed);
+    doc.setFont(undefined, isHeading ? "bold" : "normal");
+    const lines = doc.splitTextToSize((isHeading ? "" : "    ") + trimmed, 520);
     lines.forEach(line => { doc.text(line, margin, y); y += 18; });
-    if (isHeading) doc.setFont(undefined, "normal");
-    y += 12;
+    y += 12; // extra spacing between paragraphs
   });
-
-  doc.save("legal-statement.pdf");
 }
 </script>
 </div>
