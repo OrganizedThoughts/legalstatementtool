@@ -1,10 +1,23 @@
+<style>
+.heading {
+  font-weight: bold; /* bold only */
+  display: block;
+  margin-top: 1em;
+}
+
+.sentence {
+  text-indent: 3em; /* indent sentences */
+  margin-bottom: 0.75em;
+  display: block;
+}
+</style>
+
 <script>
 const SECTIONS = [
   "SUMMARY OF EVENTS:",
   "KEY CONCERNS:",
   "REQUEST / PURPOSE:"
 ];
-
 const MAX_CHARS = 500;
 window.finalLines = [];
 
@@ -30,7 +43,7 @@ function showPreview() {
       htmlChunk = `<span class="${itemForPdf.heading ? "heading" : "sentence"}">${escapeHtml(chunkText)}</span>`;
     }
 
-    html += htmlChunk;
+    html += htmlChunk + "<br>";
     usedChars += chunkText.length;
     if (itemForPdf) window.finalLines.push({ ...itemForPdf, text: chunkText });
 
@@ -40,7 +53,7 @@ function showPreview() {
   for (const line of lines) {
     if (SECTIONS.includes(line)) {
       const ok = addToPreview(
-        `<span class="heading"><strong>${escapeHtml(line)}</strong></span><br>`,
+        `<span class="heading">${escapeHtml(line)}</span>`,
         line,
         { text: line, heading: true }
       );
@@ -49,7 +62,7 @@ function showPreview() {
       const sentences = splitSentences(line);
       for (const sentence of sentences) {
         const ok = addToPreview(
-          `<span class="sentence">&nbsp;&nbsp;&nbsp;&nbsp;${escapeHtml(sentence)}</span><br>`,
+          `<span class="sentence">${escapeHtml(sentence)}</span>`,
           sentence,
           { text: sentence, heading: false }
         );
@@ -97,7 +110,6 @@ function downloadPDF() {
   doc.save("statement.pdf");
 }
 
-// HTML escaping
 function escapeHtml(str) {
   return str
     .replaceAll("&", "&amp;")
@@ -107,4 +119,5 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 </script>
+
 
