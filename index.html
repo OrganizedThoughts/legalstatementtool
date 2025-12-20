@@ -1,37 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Legal Statement Organizer</title>
-
+<meta charset="UTF-8">
+<title>Indented Sentences under Subtitles</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
 body { font-family: Arial, sans-serif; }
-
 .output {
   background: #f0f0f0;
   padding: 12px;
   margin-top: 10px;
   white-space: normal;
 }
-
-/* headings are bold in preview */
-.heading {
+.subtitle {
   font-weight: bold;
-  display: block;
   margin-top: 1em;
 }
-
-/* sentences are indented in preview */
 .sentence {
-  text-indent: 3em;
-  margin-bottom: 0.75em;
-  display: block;
+  text-indent: 2em;
+  margin: 0.5em 0;
 }
 </style>
 </head>
-
 <body>
 
 <textarea id="text" rows="10" style="width:100%;">
@@ -46,37 +36,25 @@ I request clarification.
 </textarea>
 
 <br><br>
-
 <button onclick="showPreview()">Preview</button>
 <button onclick="downloadPDF()">PDF</button>
 
 <div id="preview" class="output"></div>
 
 <script>
-const SECTIONS = [
-  "SUMMARY OF EVENTS:",
-  "KEY CONCERNS:",
-  "REQUEST / PURPOSE:"
-];
+const SECTIONS = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 const MAX_CHARS = 500;
 window.finalLines = [];
 
-// Split text into sentences
 function splitSentences(text) {
   return text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [];
 }
 
-// Escape HTML for safe preview
 function escapeHtml(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
-// Show preview, limited to MAX_CHARS
 function showPreview() {
   const raw = document.getElementById("text").value.trim();
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
@@ -84,55 +62,39 @@ function showPreview() {
   let html = "";
   let usedChars = 0;
   window.finalLines = [];
-
-  const addToPreview = (htmlChunk, plainTextChunk, itemForPdf) => {
-    let remaining = MAX_CHARS - usedChars;
-    if (remaining <= 0) return false;
-
-    let chunkText = plainTextChunk;
-    if (plainTextChunk.length > remaining) {
-      chunkText = plainTextChunk.slice(0, remaining);
-      htmlChunk = `<span class="${itemForPdf.heading ? "heading" : "sentence"}">${escapeHtml(chunkText)}</span>`;
-    }
-
-    html += htmlChunk + "<br>";
-    usedChars += chunkText.length;
-    if (itemForPdf) window.finalLines.push({ ...itemForPdf, text: chunkText });
-
-    return usedChars < MAX_CHARS;
-  };
+  let currentSection = false;
 
   for (const line of lines) {
     if (SECTIONS.includes(line)) {
-      const ok = addToPreview(
-        `<span class="heading">${escapeHtml(line)}</span>`,
-        line,
-        { text: line, heading: true }
-      );
-      if (!ok) break;
-    } else {
+      html += `<div class="subtitle">${escapeHtml(line)}</div>`;
+      window.finalLines.push({ text: line, heading: true });
+      currentSection = true;
+      continue;
+    }
+
+    if (currentSection) {
       const sentences = splitSentences(line);
       for (const sentence of sentences) {
-        const ok = addToPreview(
-          `<span class="sentence">${escapeHtml(sentence)}</span>`,
-          sentence,
-          { text: sentence, heading: false }
-        );
-        if (!ok) break;
+        if (usedChars >= MAX_CHARS) break;
+        let chunk = sentence;
+        if (chunk.length + usedChars > MAX_CHARS) {
+          chunk = chunk.slice(0, MAX_CHARS - usedChars);
+        }
+
+        html += `<p class="sentence">${escapeHtml(chunk)}</p>`;
+        window.finalLines.push({ text: chunk, heading: false });
+        usedChars += chunk.length;
       }
-      if (usedChars >= MAX_CHARS) break;
     }
   }
 
-  const fullPlain = lines.join("\n");
-  if (fullPlain.length > usedChars) {
+  if (lines.join("\n").length > usedChars) {
     html += `<em>— Preview limited to ${MAX_CHARS} characters —</em>`;
   }
 
   document.getElementById("preview").innerHTML = html;
 }
 
-// Download PDF with bold + italic headings and indented sentences
 function downloadPDF() {
   if (!window.finalLines || window.finalLines.length === 0) {
     alert("Generate preview first");
@@ -144,21 +106,19 @@ function downloadPDF() {
   let y = 20;
 
   window.finalLines.forEach(item => {
-    // Bold + Italic for headings in PDF
-    doc.setFont("helvetica", item.heading ? "bolditalic" : "normal");
-    const x = item.heading ? 20 : 35;
+    doc.setFont("helvetica", "normal");
+    const x = item.heading ? 20 : 35; // indent sentences, subtitles normal
 
     const wrapped = doc.splitTextToSize(item.text, 170);
     wrapped.forEach(line => {
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
+      if (y > 280) { doc.addPage(); y = 20; }
       doc.text(line, x, y);
       y += 8;
     });
 
+    // Extra spacing after subtitles
     y += item.heading ? 6 : 4;
+    if (item.heading) y += 4; // additional space between sections
   });
 
   doc.save("statement.pdf");
