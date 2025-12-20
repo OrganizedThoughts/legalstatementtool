@@ -71,23 +71,22 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-// Format text for HTML preview and PDF
-function formatTextForDisplay(text) {
+function formatText(text) {
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  const lines = text.split("\n");
+  const paragraphs = text.split(/\n+/).filter(p => p.trim() !== "");
   let html = "";
-  let pdfText = "";
-  lines.forEach(line => {
-    line = line.trim();
-    if (!line) return;
-    if (sections.includes(line)) {
-      html += `<p><strong>${line}</strong></p>`;
-      pdfText += line + "\n";
+  let pdfText = [];
+
+  paragraphs.forEach(p => {
+    if (sections.includes(p.trim())) {
+      html += `<p><strong>${p.trim()}</strong></p>`;
+      pdfText.push({ text: p.trim(), bold: true });
     } else {
-      html += `<p>${line}</p>`;
-      pdfText += "    " + line + "\n";
+      html += `<p>${p.trim()}</p>`;
+      pdfText.push({ text: p.trim(), bold: false });
     }
   });
+
   return { html, pdfText };
 }
 
@@ -114,24 +113,24 @@ ${concerns}
 
 REQUEST / PURPOSE:
 ${request}
-`;
-
-  try {
-    const polishedText = await rewriteStatement(rawText);
-    const { html, pdfText } = formatTextForDisplay(polishedText + `
 
 Respectfully submitted,
 ${name}
 _________________________
-Date: ${new Date().toLocaleDateString()}`);
+Date: ${new Date().toLocaleDateString()}
+`;
 
-    window.finalText = pdfText;
-    document.getElementById("preview").innerHTML = html.substring(0, 500) + (html.length > 500 ? "<p>--- Preview Only ---</p>" : "");
+  try {
+    const polishedText = await rewriteStatement(rawText);
+    const { html, pdfText } = formatText(polishedText);
+
+    window.finalPDFText = pdfText;
+    document.getElementById("preview").innerHTML = html.join("").substring(0, 500) + (html.join("").length > 500 ? "<p>--- Preview Only ---</p>" : "");
   } catch(err) { alert(err.message); }
 }
 
 function downloadPDF() {
-  if (!window.finalText) return alert("Please generate the preview first!");
+  if (!window.finalPDFText) return alert("Generate preview first!");
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const margin = 40;
@@ -143,14 +142,11 @@ function downloadPDF() {
   y += 30;
 
   doc.setFontSize(12);
-  const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  window.finalText.split("\n").forEach(line => {
-    const trimmed = line.trim();
-    if (!trimmed) { y += 12; return; }
-    const isHeading = headings.includes(trimmed);
-    doc.setFont(undefined, isHeading ? "bold" : "normal");
-    const splitLines = doc.splitTextToSize(trimmed, 520);
-    splitLines.forEach(l => { doc.text(l, margin, y); y += 18; });
+  window.finalPDFText.forEach(p => {
+    doc.setFont(undefined, p.bold ? "bold" : "normal");
+    const lines = doc.splitTextToSize(p.text, 520);
+    lines.forEach(line => { doc.text(line, margin + (p.bold ? 0 : 20), y); y += 18; });
+    y += 6;
   });
 
   doc.save("legal-statement.pdf");
