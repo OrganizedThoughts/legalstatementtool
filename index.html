@@ -6,9 +6,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   body { font-family: Arial, sans-serif; }
-  .output { background:#f0f0f0; padding:10px; margin-top:10px; }
-  .output p { text-indent: 1.5em; margin: 0 0 10px 0; }
-  .output strong { color: blue; }
+  .output { background:#f0f0f0; padding:10px; margin-top:10px; white-space: pre; }
+  .heading { font-weight: bold; font-style: italic; }
 </style>
 </head>
 <body>
@@ -35,19 +34,23 @@ I request clarification.
 function showPreview() {
   const raw = document.getElementById("text").value;
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  const paragraphs = raw.split(/\n\n/);
+  const paragraphs = raw.split(/\n\n/).filter(p=>p.trim()!=="");
   let html = "";
-  paragraphs.forEach(p => {
-    const lines = p.split("\n").map(l => l.trim()).filter(l=>l);
-    lines.forEach((line,i)=>{
+
+  paragraphs.forEach(p=>{
+    const lines = p.split("\n").map(l=>l.trim()).filter(l=>l);
+    lines.forEach(line=>{
       if(sections.includes(line)){
-        html += `<p><strong>${line}</strong></p>`;
+        html += `<span class="heading">${line}</span>\n`;
       } else {
-        html += `<p>${line}</p>`;
+        html += `    ${line}\n`; // prepend spaces for indentation
       }
     });
+    html += "\n";
   });
-  document.getElementById("preview").innerHTML = html;
+
+  // Limit to 500 chars for preview
+  document.getElementById("preview").innerText = html.substring(0,500) + (html.length>500 ? "\n--- Preview Only ---" : "");
   window.finalText = paragraphs;
 }
 
@@ -57,20 +60,24 @@ function downloadPDF() {
   const doc = new jsPDF();
   let y = 20;
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+
   window.finalText.forEach(p=>{
     const lines = p.split("\n").map(l=>l.trim()).filter(l=>l);
     lines.forEach(line=>{
       const isHeading = sections.includes(line);
       doc.setFont(undefined, isHeading ? "bold" : "normal");
-      const x = isHeading ? 20 : 30;
+      doc.setFont(undefined, isHeading ? "bolditalic" : "normal");
+      const x = isHeading ? 20 : 40; // indent paragraphs
       doc.text(line, x, y);
       y += 10;
     });
     y += 5;
   });
+
   doc.save("statement.pdf");
 }
 </script>
 
 </body>
 </html>
+
