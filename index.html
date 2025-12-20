@@ -10,19 +10,17 @@
     background: #f0f0f0; 
     padding: 10px; 
     margin-top: 10px; 
-    white-space: pre-wrap; /* preserve line breaks */
-    font-family: monospace;
+    white-space: normal; /* allow text-indent to work */
   }
   .heading { 
     font-weight: bold; 
     font-style: italic; 
-    display: block; 
-    margin-top: 1em;
+    margin-top: 1em; 
     margin-bottom: 0.3em;
   }
   .paragraph { 
-    display: block;
-    margin-bottom: 1em;
+    text-indent: 2em;  /* proper paragraph indentation */
+    margin-bottom: 0.8em; /* spacing between sentences */
   }
 </style>
 </head>
@@ -50,26 +48,27 @@ I request clarification.
 function showPreview() {
   const rawText = document.getElementById("text").value;
   const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  
+
+  // Split text into paragraphs by double line breaks
   const paragraphs = rawText.split(/\n\n/).filter(p => p.trim() !== "");
+
   let html = "";
 
   paragraphs.forEach(paragraph => {
     const lines = paragraph.split("\n").filter(l => l.trim() !== "");
-    lines.forEach((line, index) => {
-      if (headings.includes(line)) {
-        html += `<span class="heading">${line}</span>\n`;
+    lines.forEach(line => {
+      if(headings.includes(line)) {
+        html += `<div class="heading">${line}</div>`;
       } else {
-        // Indent by 4 spaces for each paragraph line
-        html += `<span class="paragraph">&nbsp;&nbsp;&nbsp;&nbsp;${line}</span>\n`;
+        html += `<div class="paragraph">${line}</div>`;
       }
     });
   });
 
-  // Limit preview to 500 characters
+  // Limit preview to 500 characters without breaking HTML tags
   let previewText = html;
-  if (previewText.length > 500) {
-    previewText = previewText.substring(0, 500) + "\n--- Preview Only ---";
+  if(previewText.length > 500) {
+    previewText = previewText.substring(0, 500) + "<div>--- Preview Only ---</div>";
   }
 
   document.getElementById("preview").innerHTML = previewText;
@@ -77,7 +76,7 @@ function showPreview() {
 }
 
 function downloadPDF() {
-  if (!window.finalText) { alert("Generate preview first"); return; }
+  if(!window.finalText) { alert("Generate preview first"); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 20;
@@ -88,11 +87,11 @@ function downloadPDF() {
     lines.forEach(line => {
       const isHeading = headings.includes(line);
       doc.setFont("helvetica", isHeading ? "bolditalic" : "normal");
-      const x = isHeading ? 20 : 30; // indent normal lines
+      const x = isHeading ? 20 : 30; // indent paragraphs under headings
       doc.text(line, x, y);
       y += 10; // line spacing
     });
-    y += 5; // extra spacing between paragraphs
+    y += 5; // extra space between paragraphs
   });
 
   doc.save("statement.pdf");
@@ -101,3 +100,4 @@ function downloadPDF() {
 
 </body>
 </html>
+
