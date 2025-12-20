@@ -274,7 +274,7 @@ textarea {
     <div class="price">$10</div>
     <p>Get your complete AI-polished PDF with professional formatting</p>
     
-    <a class="gumroad-button gumroad-btn" href="https://lamotte2.gumroad.com/l/oxhttg" target="_blank">
+    <a class="gumroad-button gumroad-btn" href="https://YOUR_USERNAME.gumroad.com/l/YOUR_PRODUCT_LINK" target="_blank">
       💳 Purchase PDF Access
     </a>
     
@@ -286,9 +286,12 @@ textarea {
   </div>
   
   <div class="download-section" id="downloadSection">
-    <h3>✅ Payment Confirmed!</h3>
-    <p style="color: #2e7d32; margin-bottom: 20px;">Your purchase is complete. Download your professional PDF below:</p>
-    <button class="download-btn" onclick="downloadFullPDF()">📥 Download Your PDF</button>
+    <h3>🔐 Verify Your Purchase</h3>
+    <p style="color: #333; margin-bottom: 15px;">Enter the license key from your Gumroad purchase email:</p>
+    <input type="text" id="licenseKey" placeholder="Enter your license key" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #4caf50; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
+    <br>
+    <button class="download-btn" onclick="verifyAndDownload()">🔓 Verify & Download PDF</button>
+    <p style="font-size: 12px; color: #666; margin-top: 15px;">Check your email from Gumroad for your license key</p>
   </div>
 </div>
 
@@ -300,7 +303,7 @@ let statementData = {};
 window.addEventListener('load', function() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('purchased') === 'true') {
-    // User completed purchase, show download section
+    // User completed purchase, show verification section
     document.getElementById('downloadSection').classList.add('active');
     // Try to retrieve saved statement from localStorage
     const savedStatement = localStorage.getItem('pendingStatement');
@@ -309,6 +312,56 @@ window.addEventListener('load', function() {
     }
   }
 });
+
+async function verifyAndDownload() {
+  const licenseKey = document.getElementById('licenseKey').value.trim();
+  
+  if (!licenseKey) {
+    alert("⚠️ Please enter your license key from the Gumroad purchase email.");
+    return;
+  }
+  
+  if (!fullStatement) {
+    alert("⚠️ Please generate a statement first.");
+    return;
+  }
+  
+  // Show loading state
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.textContent = "🔄 Verifying...";
+  btn.disabled = true;
+  
+  try {
+    // Verify with your API
+    const response = await fetch("/api/verify-purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        license_key: licenseKey,
+        product_permalink: "legal-pdf" // CHANGE THIS to your Gumroad product permalink
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.verified) {
+      // Valid purchase - allow download
+      alert("✅ Purchase verified! Downloading your PDF...");
+      downloadFullPDF();
+    } else {
+      alert("❌ Invalid license key. Please check your Gumroad email and try again.");
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+    
+  } catch (error) {
+    console.error("Verification error:", error);
+    alert("⚠️ Verification failed. Please try again.");
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
 
 async function generateStatement() {
   const name = document.getElementById("name").value.trim() || "[Your Name]";
