@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Legal Statement Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://gumroad.com/js/gumroad.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -120,40 +121,46 @@ textarea {
 .paywall {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
-  padding: 25px;
+  padding: 30px;
   border-radius: 8px;
   margin-top: 20px;
   text-align: center;
 }
 .paywall h3 {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  font-size: 24px;
 }
 .paywall .price {
-  font-size: 32px;
+  font-size: 48px;
   font-weight: bold;
   margin: 15px 0;
 }
-.paywall a {
+.paywall p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+.gumroad-btn {
   display: inline-block;
   background: white;
   color: #f5576c;
-  padding: 12px 30px;
+  padding: 16px 40px;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
-  margin: 10px 0;
-  transition: transform 0.2s;
+  font-size: 18px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  cursor: pointer;
 }
-.paywall a:hover {
+.gumroad-btn:hover {
   transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
-.btn-pdf {
-  background: white;
-  color: #667eea;
-  margin-top: 15px;
-}
-.btn-pdf:hover {
-  background: #f8f9fa;
+.payment-note {
+  font-size: 13px;
+  margin-top: 20px;
+  opacity: 0.9;
+  line-height: 1.5;
 }
 .loading {
   text-align: center;
@@ -163,6 +170,38 @@ textarea {
 }
 .loading.active {
   display: block;
+}
+.download-section {
+  background: #e8f5e9;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  padding: 25px;
+  margin-top: 20px;
+  text-align: center;
+  display: none;
+}
+.download-section.active {
+  display: block;
+}
+.download-section h3 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+}
+.download-btn {
+  background: #4caf50;
+  color: white;
+  padding: 16px 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.download-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
 }
 </style>
 </head>
@@ -233,9 +272,23 @@ textarea {
   <div class="paywall" id="paywall" style="display:none;">
     <h3>🔓 Unlock Your Full Statement</h3>
     <div class="price">$10</div>
-    <p>Get the complete AI-polished PDF document</p>
-    <a href="YOUR_PAYPAL_LINK" target="_blank">💳 Pay Now with PayPal</a>
-    <button class="btn btn-pdf" onclick="downloadFullPDF()">📥 Download PDF</button>
+    <p>Get your complete AI-polished PDF with professional formatting</p>
+    
+    <a class="gumroad-button gumroad-btn" href="https://YOUR_USERNAME.gumroad.com/l/YOUR_PRODUCT_LINK" target="_blank">
+      💳 Purchase PDF Access
+    </a>
+    
+    <p class="payment-note">
+      ✅ Secure checkout via Gumroad<br>
+      ✅ Accepts PayPal, Credit Cards, Apple Pay & more<br>
+      ✅ Instant download after payment
+    </p>
+  </div>
+  
+  <div class="download-section" id="downloadSection">
+    <h3>✅ Payment Confirmed!</h3>
+    <p style="color: #2e7d32; margin-bottom: 20px;">Your purchase is complete. Download your professional PDF below:</p>
+    <button class="download-btn" onclick="downloadFullPDF()">📥 Download Your PDF</button>
   </div>
 </div>
 
@@ -243,8 +296,21 @@ textarea {
 let fullStatement = "";
 let statementData = {};
 
+// Check if user came back from Gumroad purchase
+window.addEventListener('load', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('purchased') === 'true') {
+    // User completed purchase, show download section
+    document.getElementById('downloadSection').classList.add('active');
+    // Try to retrieve saved statement from localStorage
+    const savedStatement = localStorage.getItem('pendingStatement');
+    if (savedStatement) {
+      fullStatement = savedStatement;
+    }
+  }
+});
+
 async function generateStatement() {
-  // Get form values
   const name = document.getElementById("name").value.trim() || "[Your Name]";
   const state = document.getElementById("state").value.trim() || "the applicable jurisdiction";
   const matter = document.getElementById("matter").value;
@@ -253,10 +319,8 @@ async function generateStatement() {
   const concerns = document.getElementById("concerns").value.trim() || "[Key concerns]";
   const request = document.getElementById("request").value.trim() || "[Requested outcome]";
   
-  // Store data
   statementData = { name, state, matter, recipient, facts, concerns, request };
   
-  // Create raw statement
   const rawStatement = `
 Name: ${name}
 State: ${state}
@@ -273,13 +337,11 @@ REQUEST / PURPOSE:
 ${request}
 `;
 
-  // Show loading
   document.getElementById("loading").classList.add("active");
   document.getElementById("previewBox").classList.remove("active");
   document.getElementById("paywall").style.display = "none";
   
   try {
-    // Call AI API
     const response = await fetch("/api/rewrite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -293,13 +355,12 @@ ${request}
     const data = await response.json();
     let polishedText = data.result;
     
-    // Add signature
     fullStatement = polishedText + `\n\nRespectfully submitted,\n${name}\n_________________________\nDate: ${new Date().toLocaleDateString()}`;
     
-    // Show preview (500 chars limit)
-    displayPreview(fullStatement);
+    // Save statement for after payment
+    localStorage.setItem('pendingStatement', fullStatement);
     
-    // Show paywall
+    displayPreview(fullStatement);
     document.getElementById("paywall").style.display = "block";
     
   } catch (error) {
@@ -318,9 +379,10 @@ function displayPreview(text) {
   
   for (let line of lines) {
     line = line.trim();
+    // Remove any ** markdown formatting
+    line = line.replace(/\*\*/g, '');
     if (!line) continue;
     
-    // Check if line is a section heading (contains colon and is short)
     const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
                       line.includes('SUMMARY') || 
                       line.includes('CONCERNS') || 
@@ -346,7 +408,7 @@ function displayPreview(text) {
   }
   
   if (charCount >= CHAR_LIMIT) {
-    html += '<div class="preview-limit">Preview limited to 500 characters. Purchase to see full statement.</div>';
+    html += '<div class="preview-limit">Preview limited to 500 characters. Purchase to download full statement.</div>';
   }
   
   document.getElementById("previewContent").innerHTML = html;
@@ -376,7 +438,6 @@ function downloadFullPDF() {
   
   let y = margin;
   
-  // Title
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text("LEGAL STATEMENT", pageWidth / 2, y, { align: "center" });
@@ -385,7 +446,9 @@ function downloadFullPDF() {
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   
-  const lines = fullStatement.split('\n');
+  // Clean up any markdown formatting (** for bold)
+  const cleanedStatement = fullStatement.replace(/\*\*/g, '');
+  const lines = cleanedStatement.split('\n');
   
   for (let line of lines) {
     line = line.trim();
@@ -394,7 +457,6 @@ function downloadFullPDF() {
       continue;
     }
     
-    // Check if this is a heading
     const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
                       line.includes('SUMMARY') || 
                       line.includes('CONCERNS') || 
@@ -402,14 +464,12 @@ function downloadFullPDF() {
                       line.includes('PURPOSE') ||
                       line.includes('Respectfully');
     
-    // Check for new page
     if (y > pageHeight - margin - 20) {
       doc.addPage();
       y = margin;
     }
     
     if (isHeading) {
-      // Heading formatting
       y += 4;
       doc.setFont("helvetica", "bold");
       const wrappedHeading = doc.splitTextToSize(line, maxWidth);
@@ -418,7 +478,6 @@ function downloadFullPDF() {
       doc.setFont("helvetica", "normal");
       y += 3;
     } else {
-      // Regular text with indentation
       const wrappedText = doc.splitTextToSize(line, maxWidth - indent);
       for (let wrappedLine of wrappedText) {
         if (y > pageHeight - margin - 20) {
@@ -433,6 +492,9 @@ function downloadFullPDF() {
   }
   
   doc.save("legal-statement.pdf");
+  
+  // Clear saved statement after download
+  localStorage.removeItem('pendingStatement');
 }
 </script>
 </body>
