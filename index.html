@@ -2,141 +2,262 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Legal Statement Organizer - Format Test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Legal Statement Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background: #f0f9ff; color: #333; }
-.container { max-width: 750px; margin:auto; background:white; padding:30px 25px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1); }
-h2 { color:#1f6feb; font-weight:600; text-align:center; margin-bottom:20px; }
-label { font-weight:600; display:block; margin-bottom:5px; }
-input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
-button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
-button:hover { background:#155bcf; }
-.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; }
-.subtitle { font-weight: bold; margin-top: 1em; }
-.content { padding-left: 40px; margin-bottom: 1em; }
-.paywall { background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px; padding:20px; margin-top:25px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: 'Inter', Arial, sans-serif; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 40px;
+}
+h1 {
+  color: #667eea;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: 'Inter', Arial, sans-serif;
+  transition: border-color 0.3s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+.btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.preview-box {
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 25px;
+  margin-top: 30px;
+  display: none;
+}
+.preview-box.active {
+  display: block;
+}
+.preview-title {
+  font-weight: bold;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.preview-content {
+  line-height: 1.8;
+}
+.preview-content .section-title {
+  font-weight: bold;
+  color: #333;
+  margin-top: 15px;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+.preview-content .section-text {
+  padding-left: 30px;
+  color: #555;
+  margin-bottom: 12px;
+}
+.preview-limit {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+  font-style: italic;
+  color: #999;
+  text-align: center;
+}
+.paywall {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 20px;
+  text-align: center;
+}
+.paywall h3 {
+  margin-bottom: 15px;
+}
+.paywall .price {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 15px 0;
+}
+.paywall a {
+  display: inline-block;
+  background: white;
+  color: #f5576c;
+  padding: 12px 30px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  margin: 10px 0;
+  transition: transform 0.2s;
+}
+.paywall a:hover {
+  transform: scale(1.05);
+}
+.btn-pdf {
+  background: white;
+  color: #667eea;
+  margin-top: 15px;
+}
+.btn-pdf:hover {
+  background: #f8f9fa;
+}
+.loading {
+  text-align: center;
+  color: #667eea;
+  margin-top: 20px;
+  display: none;
+}
+.loading.active {
+  display: block;
+}
 </style>
 </head>
 <body>
 <div class="container">
-<h2>AI Legal Statement Organizer (Format Test)</h2>
-
-<div>
-<label>📝 Your Full Legal Name</label>
-<input id="name">
-<label>State (optional)</label>
-<input id="state" placeholder="e.g., New York">
-<label>Type of Matter</label>
-<select id="matter">
-  <option>Family Court</option>
-  <option>Custody / Visitation</option>
-  <option>Child Support</option>
-  <option>Divorce</option>
-  <option>Landlord / Tenant</option>
-  <option>Civil Matter</option>
-  <option>Other Legal Matter</option>
-</select>
-<label>Who is this statement for?</label>
-<select id="recipient">
-  <option>My Attorney</option>
-  <option>The Court</option>
-  <option>Both</option>
-</select>
-</div>
-
-<div>
-<label>Chronological Summary of Events (facts only)</label>
-<textarea id="facts" rows="5"></textarea>
-<label>Key Concerns or Issues</label>
-<textarea id="concerns" rows="4"></textarea>
-<label>What outcome or clarification are you requesting?</label>
-<textarea id="request" rows="3"></textarea>
-</div>
-
-<button onclick="generate()">Generate AI Preview</button>
-<div id="preview" class="output"></div>
-
-<div id="paywall" class="paywall" style="display:none;">
-  <p><strong>Unlock Full AI-Polished PDF</strong></p>
-  <p>One-time fee: <strong>$10</strong></p>
-  <p><a href="YOUR_PAYPAL_LINK" target="_blank">👉 Pay to Unlock</a></p>
-  <p>After payment, click below to download your PDF.</p>
-  <button onclick="downloadPDF()">Download PDF</button>
-</div>
+  <h1>📋 AI Legal Statement Generator</h1>
+  
+  <form id="statementForm" onsubmit="return false;">
+    <div class="form-group">
+      <label>📝 Your Full Legal Name</label>
+      <input type="text" id="name" placeholder="Enter your full name">
+    </div>
+    
+    <div class="form-group">
+      <label>📍 State (Optional)</label>
+      <input type="text" id="state" placeholder="e.g., New York">
+    </div>
+    
+    <div class="form-group">
+      <label>⚖️ Type of Matter</label>
+      <select id="matter">
+        <option>Family Court</option>
+        <option>Custody / Visitation</option>
+        <option>Child Support</option>
+        <option>Divorce</option>
+        <option>Landlord / Tenant</option>
+        <option>Civil Matter</option>
+        <option>Other Legal Matter</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>👤 Who is this statement for?</label>
+      <select id="recipient">
+        <option>My Attorney</option>
+        <option>The Court</option>
+        <option>Both</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>📅 Chronological Summary of Events (Facts Only)</label>
+      <textarea id="facts" rows="5" placeholder="Describe the events in chronological order..."></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>⚠️ Key Concerns or Issues</label>
+      <textarea id="concerns" rows="4" placeholder="What are your main concerns?"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>🎯 What outcome or clarification are you requesting?</label>
+      <textarea id="request" rows="3" placeholder="What do you want to achieve?"></textarea>
+    </div>
+    
+    <button type="button" class="btn" onclick="generateStatement()">✨ Generate AI Statement</button>
+  </form>
+  
+  <div class="loading" id="loading">
+    <p>🤖 AI is polishing your statement...</p>
+  </div>
+  
+  <div class="preview-box" id="previewBox">
+    <div class="preview-title">📄 Preview (Limited to 500 Characters)</div>
+    <div class="preview-content" id="previewContent"></div>
+  </div>
+  
+  <div class="paywall" id="paywall" style="display:none;">
+    <h3>🔓 Unlock Your Full Statement</h3>
+    <div class="price">$10</div>
+    <p>Get the complete AI-polished PDF document</p>
+    <a href="YOUR_PAYPAL_LINK" target="_blank">💳 Pay Now with PayPal</a>
+    <button class="btn btn-pdf" onclick="downloadFullPDF()">📥 Download PDF</button>
+  </div>
 </div>
 
 <script>
-const SECTIONS = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+let fullStatement = "";
+let statementData = {};
 
-async function rewriteStatement(text) {
-  const response = await fetch("/api/rewrite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to fetch AI");
-  }
-  const data = await response.json();
-  return data.result;
-}
-
-function parseText(text) {
-  const lines = text.split("\n");
-  const parsed = [];
-  let currentSubtitle = null;
-  let currentContent = "";
-  
-  for (let line of lines) {
-    line = line.trim();
-    if (!line) continue;
-    
-    if (SECTIONS.some(section => line.includes(section))) {
-      // Save previous content if exists
-      if (currentSubtitle && currentContent) {
-        parsed.push({ type: 'subtitle', text: currentSubtitle });
-        parsed.push({ type: 'content', text: currentContent.trim() });
-        currentContent = "";
-      } else if (currentSubtitle) {
-        parsed.push({ type: 'subtitle', text: currentSubtitle });
-      }
-      currentSubtitle = line;
-    } else {
-      currentContent += (currentContent ? " " : "") + line;
-    }
-  }
-  
-  // Don't forget the last section
-  if (currentSubtitle) {
-    parsed.push({ type: 'subtitle', text: currentSubtitle });
-    if (currentContent) {
-      parsed.push({ type: 'content', text: currentContent.trim() });
-    }
-  }
-  
-  return parsed;
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-async function generate(){
-  const name = document.getElementById("name").value || "[Name]";
-  const state = document.getElementById("state").value || "the applicable jurisdiction";
+async function generateStatement() {
+  // Get form values
+  const name = document.getElementById("name").value.trim() || "[Your Name]";
+  const state = document.getElementById("state").value.trim() || "the applicable jurisdiction";
   const matter = document.getElementById("matter").value;
   const recipient = document.getElementById("recipient").value;
-  const facts = document.getElementById("facts").value || "[Summary of events]";
-  const concerns = document.getElementById("concerns").value || "[Key concerns]";
-  const request = document.getElementById("request").value || "[Requested outcome]";
-
-  const rawText = `
+  const facts = document.getElementById("facts").value.trim() || "[Summary of events]";
+  const concerns = document.getElementById("concerns").value.trim() || "[Key concerns]";
+  const request = document.getElementById("request").value.trim() || "[Requested outcome]";
+  
+  // Store data
+  statementData = { name, state, matter, recipient, facts, concerns, request };
+  
+  // Create raw statement
+  const rawStatement = `
 Name: ${name}
 State: ${state}
 Matter Type: ${matter}
@@ -152,106 +273,165 @@ REQUEST / PURPOSE:
 ${request}
 `;
 
+  // Show loading
+  document.getElementById("loading").classList.add("active");
+  document.getElementById("previewBox").classList.remove("active");
+  document.getElementById("paywall").style.display = "none";
+  
   try {
-    const polishedText = await rewriteStatement(rawText);
-
-    window.finalText = polishedText + `
-
-Respectfully submitted,
-${name}
-_________________________
-Date: ${new Date().toLocaleDateString()}
-`;
-
-    // Parse and format preview with 500 char limit
-    const parsedData = parseText(window.finalText);
-    let html = "";
-    let charCount = 0;
-    let truncated = false;
+    // Call AI API
+    const response = await fetch("/api/rewrite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: rawStatement })
+    });
     
-    for (let item of parsedData) {
-      if (item.type === 'subtitle') {
-        html += `<div class="subtitle">${escapeHtml(item.text)}</div>`;
-      } else {
-        const remaining = 500 - charCount;
-        if (remaining <= 0) {
-          truncated = true;
-          break;
-        }
-        
-        const textToShow = item.text.length > remaining 
-          ? item.text.substring(0, remaining) + "..."
-          : item.text;
-        
-        html += `<div class="content">${escapeHtml(textToShow)}</div>`;
-        charCount += textToShow.length;
-        
-        if (textToShow.length < item.text.length) {
-          truncated = true;
-          break;
-        }
-      }
+    if (!response.ok) {
+      throw new Error("AI service unavailable");
     }
     
-    if (truncated) {
-      html += `<div style="margin-top:15px;font-style:italic;">--- Preview limited to 500 characters ---</div>`;
-    }
-
-    document.getElementById("preview").innerHTML = html;
+    const data = await response.json();
+    let polishedText = data.result;
+    
+    // Add signature
+    fullStatement = polishedText + `\n\nRespectfully submitted,\n${name}\n_________________________\nDate: ${new Date().toLocaleDateString()}`;
+    
+    // Show preview (500 chars limit)
+    displayPreview(fullStatement);
+    
+    // Show paywall
     document.getElementById("paywall").style.display = "block";
-  } catch (err) {
-    alert("AI generation failed: " + err.message);
-    console.error(err);
+    
+  } catch (error) {
+    alert("Failed to generate statement. Please try again.");
+    console.error(error);
+  } finally {
+    document.getElementById("loading").classList.remove("active");
   }
 }
 
-function downloadPDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
-  const margin = 40;
-  const indentWidth = 60;
-  let y = margin;
-
-  doc.setFontSize(16);
-  doc.setFont(undefined,'bold');
-  doc.text("STATEMENT FOR LEGAL COMMUNICATION", margin, y);
-  y += 30;
-
-  doc.setFontSize(12);
-  doc.setFont(undefined,'normal');
-
-  const pdfData = parseText(window.finalText);
+function displayPreview(text) {
+  const lines = text.split('\n');
+  let html = '';
+  let charCount = 0;
+  const CHAR_LIMIT = 500;
   
-  for (let item of pdfData) {
-    if (item.type === 'subtitle') {
-      if (y > 20) y += 5;
-      if (y > 700) { doc.addPage(); y = margin; }
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+    
+    // Check if line is a section heading (contains colon and is short)
+    const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
+                      line.includes('SUMMARY') || 
+                      line.includes('CONCERNS') || 
+                      line.includes('REQUEST') ||
+                      line.includes('PURPOSE');
+    
+    if (isHeading) {
+      html += `<div class="section-title">${escapeHtml(line)}</div>`;
+    } else {
+      const remaining = CHAR_LIMIT - charCount;
+      if (remaining <= 0) break;
       
-      doc.setFont(undefined, 'bold');
-      doc.setFontSize(12);
-      
-      const lines = doc.splitTextToSize(item.text, 520);
-      for (let line of lines) {
-        doc.text(line, margin, y);
-        y += 18;
+      let displayText = line;
+      if (line.length > remaining) {
+        displayText = line.substring(0, remaining) + '...';
       }
-      doc.setFont(undefined, 'normal');
-      y += 2;
       
-    } else if (item.type === 'content') {
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(11);
+      html += `<div class="section-text">${escapeHtml(displayText)}</div>`;
+      charCount += displayText.length;
       
-      const lines = doc.splitTextToSize(item.text, 520 - indentWidth);
-      for (let line of lines) {
-        if (y > 700) { doc.addPage(); y = margin; }
-        doc.text(line, margin + indentWidth, y);
-        y += 18;
-      }
-      y += 3;
+      if (displayText.endsWith('...')) break;
     }
   }
+  
+  if (charCount >= CHAR_LIMIT) {
+    html += '<div class="preview-limit">Preview limited to 500 characters. Purchase to see full statement.</div>';
+  }
+  
+  document.getElementById("previewContent").innerHTML = html;
+  document.getElementById("previewBox").classList.add("active");
+}
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function downloadFullPDF() {
+  if (!fullStatement) {
+    alert("Please generate a statement first");
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  const margin = 20;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = pageWidth - (margin * 2);
+  const indent = 15;
+  
+  let y = margin;
+  
+  // Title
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("LEGAL STATEMENT", pageWidth / 2, y, { align: "center" });
+  y += 15;
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  
+  const lines = fullStatement.split('\n');
+  
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) {
+      y += 6;
+      continue;
+    }
+    
+    // Check if this is a heading
+    const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
+                      line.includes('SUMMARY') || 
+                      line.includes('CONCERNS') || 
+                      line.includes('REQUEST') ||
+                      line.includes('PURPOSE') ||
+                      line.includes('Respectfully');
+    
+    // Check for new page
+    if (y > pageHeight - margin - 20) {
+      doc.addPage();
+      y = margin;
+    }
+    
+    if (isHeading) {
+      // Heading formatting
+      y += 4;
+      doc.setFont("helvetica", "bold");
+      const wrappedHeading = doc.splitTextToSize(line, maxWidth);
+      doc.text(wrappedHeading, margin, y);
+      y += wrappedHeading.length * 7;
+      doc.setFont("helvetica", "normal");
+      y += 3;
+    } else {
+      // Regular text with indentation
+      const wrappedText = doc.splitTextToSize(line, maxWidth - indent);
+      for (let wrappedLine of wrappedText) {
+        if (y > pageHeight - margin - 20) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(wrappedLine, margin + indent, y);
+        y += 7;
+      }
+      y += 2;
+    }
+  }
+  
   doc.save("legal-statement.pdf");
 }
 </script>
