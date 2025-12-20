@@ -15,8 +15,8 @@ input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-r
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
 .output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; }
-.output .subtitle { font-weight: bold; margin-top: 1em; }
-.output .content { padding-left: 40px; margin-bottom: 1em; }
+.subtitle { font-weight: bold; margin-top: 1em; }
+.content { padding-left: 40px; margin-bottom: 1em; }
 .paywall { background:#fff3cd; border-left:5px solid #ffeeba; border-radius:8px; padding:20px; margin-top:25px; }
 </style>
 </head>
@@ -69,7 +69,7 @@ button:hover { background:#155bcf; }
 </div>
 
 <script>
-const SUBTITLES = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+const SECTIONS = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 
 async function rewriteStatement(text) {
   const response = await fetch("/api/rewrite", {
@@ -85,40 +85,40 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-function formatPreview(text, charLimit) {
-  const lines = text.split('\n');
-  let html = '';
-  let charCount = 0;
-  let inContent = false;
+function parseText(text) {
+  const lines = text.split("\n");
+  const parsed = [];
+  let currentSubtitle = null;
+  let currentContent = "";
   
   for (let line of lines) {
     line = line.trim();
     if (!line) continue;
     
-    // Check if this line is a subtitle
-    const isSubtitle = SUBTITLES.some(sub => line.includes(sub));
-    
-    if (isSubtitle) {
-      html += `<div class="subtitle">${escapeHtml(line)}</div>`;
-      inContent = true;
+    if (SECTIONS.some(section => line.includes(section))) {
+      // Save previous content if exists
+      if (currentSubtitle && currentContent) {
+        parsed.push({ type: 'subtitle', text: currentSubtitle });
+        parsed.push({ type: 'content', text: currentContent.trim() });
+        currentContent = "";
+      } else if (currentSubtitle) {
+        parsed.push({ type: 'subtitle', text: currentSubtitle });
+      }
+      currentSubtitle = line;
     } else {
-      const remaining = charLimit - charCount;
-      if (remaining <= 0) break;
-      
-      const textToShow = line.length > remaining ? line.substring(0, remaining) + "..." : line;
-      const className = inContent ? "content" : "";
-      html += `<div class="${className}">${escapeHtml(textToShow)}</div>`;
-      charCount += textToShow.length;
-      
-      if (textToShow.length < line.length) break;
+      currentContent += (currentContent ? " " : "") + line;
     }
   }
   
-  if (charCount >= charLimit) {
-    html += '<div style="margin-top:15px;font-style:italic;color:#666;">--- Preview limited to 500 characters ---</div>';
+  // Don't forget the last section
+  if (currentSubtitle) {
+    parsed.push({ type: 'subtitle', text: currentSubtitle });
+    if (currentContent) {
+      parsed.push({ type: 'content', text: currentContent.trim() });
+    }
   }
   
-  return html;
+  return parsed;
 }
 
 function escapeHtml(str) {
@@ -163,7 +163,41 @@ _________________________
 Date: ${new Date().toLocaleDateString()}
 `;
 
-    document.getElementById("preview").innerHTML = formatPreview(window.finalText, 500);
+    // Parse and format preview with 500 char limit
+    const parsedData = parseText(window.finalText);
+    let html = "";
+    let charCount = 0;
+    let truncated = false;
+    
+    for (let item of parsedData) {
+      if (item.type === 'subtitle') {
+        html += `<div class="subtitle">${escapeHtml(item.text)}</div>`;
+      } else {
+        const remaining = 500 - charCount;
+        if (remaining <= 0) {
+          truncated = true;
+          break;
+        }
+        
+        const textToShow = item.text.length > remaining 
+          ? item.text.substring(0, remaining) + "..."
+          : item.text;
+        
+        html += `<div class="content">${escapeHtml(textToShow)}</div>`;
+        charCount += textToShow.length;
+        
+        if (textToShow.length < item.text.length) {
+          truncated = true;
+          break;
+        }
+      }
+    }
+    
+    if (truncated) {
+      html += `<div style="margin-top:15px;font-style:italic;">--- Preview limited to 500 characters ---</div>`;
+    }
+
+    document.getElementById("preview").innerHTML = html;
     document.getElementById("paywall").style.display = "block";
   } catch (err) {
     alert("AI generation failed: " + err.message);
@@ -175,7 +209,7 @@ function downloadPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const margin = 40;
-  const indent = 60;
+  const indentWidth = 60;
   let y = margin;
 
   doc.setFontSize(16);
@@ -186,35 +220,35 @@ function downloadPDF(){
   doc.setFontSize(12);
   doc.setFont(undefined,'normal');
 
-  const lines = window.finalText.split('\n');
+  const pdfData = parseText(window.finalText);
   
-  for (let line of lines) {
-    line = line.trim();
-    if (!line) {
-      y += 12;
-      continue;
-    }
-    
-    // Check if this is a subtitle
-    const isSubtitle = SUBTITLES.some(sub => line.includes(sub));
-    
-    if (isSubtitle) {
-      y += 6; // Extra space before subtitle
+  for (let item of pdfData) {
+    if (item.type === 'subtitle') {
+      if (y > 20) y += 5;
+      if (y > 700) { doc.addPage(); y = margin; }
+      
       doc.setFont(undefined, 'bold');
-      const wrapped = doc.splitTextToSize(line, 520);
-      wrapped.forEach(wLine => {
-        if (y > 700) { doc.addPage(); y = margin; }
-        doc.text(wLine, margin, y);
+      doc.setFontSize(12);
+      
+      const lines = doc.splitTextToSize(item.text, 520);
+      for (let line of lines) {
+        doc.text(line, margin, y);
         y += 18;
-      });
+      }
       doc.setFont(undefined, 'normal');
-    } else {
-      const wrapped = doc.splitTextToSize(line, 520 - indent);
-      wrapped.forEach(wLine => {
+      y += 2;
+      
+    } else if (item.type === 'content') {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(11);
+      
+      const lines = doc.splitTextToSize(item.text, 520 - indentWidth);
+      for (let line of lines) {
         if (y > 700) { doc.addPage(); y = margin; }
-        doc.text(wLine, margin + indent, y);
+        doc.text(line, margin + indentWidth, y);
         y += 18;
-      });
+      }
+      y += 3;
     }
   }
 
