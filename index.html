@@ -16,9 +16,9 @@ body { font-family: Arial, sans-serif; }
   font-weight: bold;
   margin-top: 1em;
 }
-.sentence {
-  text-indent: 2em; /* Indent the first line of each sentence */
-  margin: 0.5em 0;
+.content {
+  padding-left: 2em; /* visible indentation */
+  margin-bottom: 1em;
 }
 </style>
 </head>
@@ -46,59 +46,55 @@ const SECTIONS = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 const MAX_CHARS = 500;
 window.finalLines = [];
 
-// Split text into sentences
-function splitSentences(text) {
-  return text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [];
-}
-
-// Escape HTML for preview
 function escapeHtml(str) {
   return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
-// Show preview with subtitles and indented sentences
 function showPreview() {
   const raw = document.getElementById("text").value.trim();
-  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
-
+  const lines = raw.split("\n");
   let html = "";
   let usedChars = 0;
   window.finalLines = [];
-  let currentSection = false;
+  let currentContent = "";
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
     if (SECTIONS.includes(line)) {
+      // flush previous content
+      if (currentContent) {
+        if (usedChars < MAX_CHARS) {
+          const chunk = currentContent.slice(0, MAX_CHARS - usedChars);
+          html += `<div class="content">${escapeHtml(chunk)}</div>`;
+          window.finalLines.push({ text: chunk, heading: false });
+          usedChars += chunk.length;
+        }
+        currentContent = "";
+      }
       html += `<div class="subtitle">${escapeHtml(line)}</div>`;
       window.finalLines.push({ text: line, heading: true });
-      currentSection = true;
-      continue;
-    }
-
-    if (currentSection) {
-      const sentences = splitSentences(line);
-      for (const sentence of sentences) {
-        if (usedChars >= MAX_CHARS) break;
-        let chunk = sentence;
-        if (chunk.length + usedChars > MAX_CHARS) {
-          chunk = chunk.slice(0, MAX_CHARS - usedChars);
-        }
-
-        html += `<p class="sentence">${escapeHtml(chunk)}</p>`;
-        window.finalLines.push({ text: chunk, heading: false });
-        usedChars += chunk.length;
-      }
+    } else {
+      currentContent += (currentContent ? " " : "") + line;
     }
   }
 
-  if (lines.join("\n").length > usedChars) {
+  // flush remaining content
+  if (currentContent && usedChars < MAX_CHARS) {
+    const chunk = currentContent.slice(0, MAX_CHARS - usedChars);
+    html += `<div class="content">${escapeHtml(chunk)}</div>`;
+    window.finalLines.push({ text: chunk, heading: false });
+  }
+
+  if (raw.length > usedChars) {
     html += `<em>— Preview limited to ${MAX_CHARS} characters —</em>`;
   }
 
   document.getElementById("preview").innerHTML = html;
 }
 
-// Download PDF with subtitles and indented sentences
 function downloadPDF() {
   if (!window.finalLines || window.finalLines.length === 0) {
     alert("Generate preview first");
@@ -110,16 +106,15 @@ function downloadPDF() {
   let y = 20;
 
   window.finalLines.forEach(item => {
-    doc.setFont("helvetica", "normal");
-    const x = item.heading ? 20 : 35; // indent only sentences
-
+    // subtitles bold, content normal
+    doc.setFont("helvetica", item.heading ? "bold" : "normal");
+    const x = item.heading ? 20 : 35; // indent content
     const wrapped = doc.splitTextToSize(item.text, 170);
     wrapped.forEach(line => {
       if (y > 280) { doc.addPage(); y = 20; }
       doc.text(line, x, y);
       y += 8;
     });
-
     y += item.heading ? 6 : 4; // extra spacing after subtitles
   });
 
