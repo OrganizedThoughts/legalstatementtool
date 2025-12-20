@@ -3,28 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <title>Legal Statement Organizer</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-  body { font-family: Arial, sans-serif; }
-  .output { background:#f0f0f0; padding:10px; margin-top:10px; white-space: pre-wrap; }
-  .heading { font-weight: bold; font-style: italic; }
-  .paragraph { text-indent: 2em; margin-bottom: 1em; }
+body { font-family: Arial, sans-serif; }
+
+.output {
+background: #f0f0f0;
+padding: 12px;
+margin-top: 10px;
+white-space: normal;
+}
+
+.heading {
+font-weight: bold;
+font-style: italic;
+display: block;
+margin-top: 1em;
+}
+
+.sentence {
+text-indent: 3em; /* generous indentation */
+margin-bottom: 0.75em;
+display: block;
+}
 </style>
 </head>
+
 <body>
 
 <textarea id="text" rows="10" style="width:100%;">
 SUMMARY OF EVENTS:
-This is the first event.
-It continues here.
+This is the first event. It continues here.
 
 KEY CONCERNS:
-Concern one.
-Concern two.
+Concern one. Concern two.
 
 REQUEST / PURPOSE:
 I request clarification.
 </textarea>
+
+<br><br>
 
 <button onclick="showPreview()">Preview</button>
 <button onclick="downloadPDF()">PDF</button>
@@ -32,49 +52,82 @@ I request clarification.
 <div id="preview" class="output"></div>
 
 <script>
+const SECTIONS = [
+"SUMMARY OF EVENTS:",
+"KEY CONCERNS:",
+"REQUEST / PURPOSE:"
+];
+
+function splitSentences(text) {
+return text
+.match(/[^.!?]+[.!?]*/g)
+?.map(s => s.trim())
+.filter(Boolean) || [];
+}
+
 function showPreview() {
-  const raw = document.getElementById("text").value;
-  const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  const paragraphs = raw.split(/\n\n/).filter(p => p.trim() !== "");
-  let html = "";
+const raw = document.getElementById("text").value.trim();
+const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
 
-  paragraphs.forEach(p => {
-    const lines = p.split("\n").map(l => l.trim()).filter(l => l);
-    lines.forEach((line, index) => {
-      if(sections.includes(line)){
-        html += `<span class="heading">${line}</span>\n`;
-      } else {
-        html += `<span class="paragraph">${line}</span>\n`;
-      }
-    });
-    html += "\n";
-  });
+let html = "";
+let plainTextCount = 0;
+const MAX_CHARS = 500;
 
-  // Limit preview to 500 characters
-  document.getElementById("preview").innerHTML = html.substring(0, 500) + (html.length > 500 ? "\n--- Preview Only ---" : "");
-  window.finalText = paragraphs;
+window.finalLines = [];
+
+for (let line of lines) {
+if (SECTIONS.includes(line)) {
+html += `<span class="heading">${line}</span>`;
+plainTextCount += line.length;
+window.finalLines.push({ text: line, heading: true });
+} else {
+const sentences = splitSentences(line);
+sentences.forEach(sentence => {
+if (plainTextCount < MAX_CHARS) {
+html += `<span class="sentence">${sentence}</span>`;
+}
+plainTextCount += sentence.length;
+window.finalLines.push({ text: sentence, heading: false });
+});
+}
+}
+
+if (plainTextCount > MAX_CHARS) {
+html += `<em>— Preview limited to 500 characters —</em>`;
+}
+
+document.getElementById("preview").innerHTML = html;
 }
 
 function downloadPDF() {
-  if(!window.finalText){ alert("Generate preview first"); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 20;
-  const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+if (!window.finalLines) {
+alert("Generate preview first");
+return;
+}
 
-  window.finalText.forEach(p => {
-    const lines = p.split("\n").map(l => l.trim()).filter(l => l);
-    lines.forEach(line => {
-      const isHeading = sections.includes(line);
-      doc.setFont("helvetica", isHeading ? "bolditalic" : "normal");
-      const x = isHeading ? 20 : 30; // indent for paragraphs
-      doc.text(line, x, y);
-      y += 10;
-    });
-    y += 5;
-  });
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+let y = 20;
 
-  doc.save("statement.pdf");
+window.finalLines.forEach(item => {
+doc.setFont("helvetica", item.heading ? "bolditalic" : "normal");
+
+const x = item.heading ? 20 : 35; // strong paragraph indentation
+const wrapped = doc.splitTextToSize(item.text, 170);
+
+wrapped.forEach(line => {
+if (y > 280) {
+doc.addPage();
+y = 20;
+}
+doc.text(line, x, y);
+y += 8;
+});
+
+y += item.heading ? 6 : 4;
+});
+
+doc.save("statement.pdf");
 }
 </script>
 
