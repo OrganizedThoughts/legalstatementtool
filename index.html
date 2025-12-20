@@ -14,7 +14,7 @@ label { font-weight:600; display:block; margin-bottom:5px; }
 input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
-.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; }
+.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: monospace; }
 </style>
 </head>
 <body>
@@ -68,6 +68,10 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
+function indentSentences(text) {
+  return text.replace(/(?<=\. |\? |\! )/g, "\n    ").replace(/^/, "    ");
+}
+
 async function generate() {
   const name = document.getElementById("name").value || "[Name]";
   const state = document.getElementById("state").value || "the applicable jurisdiction";
@@ -95,18 +99,21 @@ ${request}
 
   try {
     const polishedText = await rewriteStatement(rawText);
-    window.finalText = polishedText + `
 
-Respectfully submitted,
-${name}
-_________________________
-Date: ${new Date().toLocaleDateString()}
-`;
+    // Indent every sentence
+    const indentedText = indentSentences(polishedText);
+
+    window.finalText = indentedText + `
+
+    Respectfully submitted,
+    ${name}
+    _________________________
+    Date: ${new Date().toLocaleDateString()}
+    `;
+
     document.getElementById("preview").innerText =
       window.finalText.substring(0, 150) + "\n\n--- Preview Only ---";
-  } catch (err) {
-    alert(err.message);
-  }
+  } catch (err) { alert(err.message); }
 }
 
 function downloadPDF() {
@@ -126,15 +133,23 @@ function downloadPDF() {
   paragraphs.forEach(paragraph => {
     const trimmed = paragraph.trim();
     if (!trimmed) return;
-    // Bold headings
+
     const isHeading = /SUMMARY OF EVENTS:|KEY CONCERNS:|REQUEST \/ PURPOSE:/.test(trimmed);
     doc.setFont(undefined, isHeading ? "bold" : "normal");
-    const lines = doc.splitTextToSize((isHeading ? "" : "    ") + trimmed, 520);
-    lines.forEach(line => { doc.text(line, margin, y); y += 18; });
-    y += 12; // extra spacing between paragraphs
+
+    const sentences = trimmed.split(/(?<=[.?!])\s+/);
+    sentences.forEach(sentence => {
+      const line = sentence.trim();
+      if (!line) return;
+      const indentedLine = isHeading ? line : "    " + line;
+      const lines = doc.splitTextToSize(indentedLine, 520);
+      lines.forEach(l => { doc.text(l, margin, y); y += 18; });
+    });
+    y += 12;
   });
 }
 </script>
 </div>
 </body>
 </html>
+
