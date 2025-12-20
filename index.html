@@ -1,171 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Legal Statement Organizer</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<style>
-body { font-family: Arial, sans-serif; }
-
-.output {
-background: #f0f0f0;
-padding: 12px;
-margin-top: 10px;
-white-space: normal;
-}
-
-/* headings are bold + italic */
-.heading {
-font-weight: bold;
-font-style: italic;
-display: block;
-margin-top: 1em;
-}
-
-/* sentences are indented */
-.sentence {
-text-indent: 3em;
-margin-bottom: 0.75em;
-display: block;
-}
-</style>
-</head>
-
-<body>
-
-<textarea id="text" rows="10" style="width:100%;">
-SUMMARY OF EVENTS:
-This is the first event. It continues here.
-
-KEY CONCERNS:
-Concern one. Concern two.
-
-REQUEST / PURPOSE:
-I request clarification.
-</textarea>
-
-<br><br>
-
-<button onclick="showPreview()">Preview</button>
-<button onclick="downloadPDF()">PDF</button>
-
-<div id="preview" class="output"></div>
-
 <script>
 const SECTIONS = [
-"SUMMARY OF EVENTS:",
-"KEY CONCERNS:",
-"REQUEST / PURPOSE:"
+  "SUMMARY OF EVENTS:",
+  "KEY CONCERNS:",
+  "REQUEST / PURPOSE:"
 ];
 
 const MAX_CHARS = 500;
 window.finalLines = [];
 
 function splitSentences(text) {
-return (
-text
-.match(/[^.!?]+[.!?]*/g)
-?.map(s => s.trim())
-.filter(Boolean) || []
-);
+  return text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [];
 }
 
 function showPreview() {
-const raw = document.getElementById("text").value.trim();
-const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  const raw = document.getElementById("text").value.trim();
+  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
 
-let html = "";
-let usedChars = 0;
-window.finalLines = [];
+  let html = "";
+  let usedChars = 0;
+  window.finalLines = [];
 
-const addToPreview = (htmlChunk, plainTextChunk, itemForPdf) => {
-// Stop adding once we hit the preview limit
-if (usedChars >= MAX_CHARS) return false;
+  const addToPreview = (htmlChunk, plainTextChunk, itemForPdf) => {
+    let remaining = MAX_CHARS - usedChars;
+    if (remaining <= 0) return false;
 
-// Only include if it fits within the limit (no partial sentences/headings)
-if (usedChars + plainTextChunk.length > MAX_CHARS) return false;
+    let chunkText = plainTextChunk;
+    if (plainTextChunk.length > remaining) {
+      chunkText = plainTextChunk.slice(0, remaining);
+      htmlChunk = `<span class="${itemForPdf.heading ? "heading" : "sentence"}">${escapeHtml(chunkText)}</span>`;
+    }
 
-html += htmlChunk;
-usedChars += plainTextChunk.length;
-if (itemForPdf) window.finalLines.push(itemForPdf);
-return true;
-};
+    html += htmlChunk;
+    usedChars += chunkText.length;
+    if (itemForPdf) window.finalLines.push({ ...itemForPdf, text: chunkText });
 
-for (const line of lines) {
-if (SECTIONS.includes(line)) {
-const ok = addToPreview(
-`<span class="heading"><strong><em>${escapeHtml(line)}</em></strong></span>`,
-line,
-{ text: line, heading: true }
-);
-if (!ok) break;
-} else {
-const sentences = splitSentences(line);
-for (const sentence of sentences) {
-const ok = addToPreview(
-`<span class="sentence">&nbsp;&nbsp;&nbsp;&nbsp;${escapeHtml(sentence)}</span>`,
-sentence,
-{ text: sentence, heading: false }
-);
-if (!ok) break;
-}
-if (usedChars >= MAX_CHARS) break;
-}
-}
+    return usedChars < MAX_CHARS;
+  };
 
-// If there is more content beyond what we displayed, show the notice
-const fullPlain = lines.join("\n");
-if (fullPlain.length > usedChars) {
-html += `<em>— Preview limited to ${MAX_CHARS} characters —</em>`;
-}
+  for (const line of lines) {
+    if (SECTIONS.includes(line)) {
+      const ok = addToPreview(
+        `<span class="heading"><strong>${escapeHtml(line)}</strong></span><br>`,
+        line,
+        { text: line, heading: true }
+      );
+      if (!ok) break;
+    } else {
+      const sentences = splitSentences(line);
+      for (const sentence of sentences) {
+        const ok = addToPreview(
+          `<span class="sentence">&nbsp;&nbsp;&nbsp;&nbsp;${escapeHtml(sentence)}</span><br>`,
+          sentence,
+          { text: sentence, heading: false }
+        );
+        if (!ok) break;
+      }
+      if (usedChars >= MAX_CHARS) break;
+    }
+  }
 
-document.getElementById("preview").innerHTML = html;
+  const fullPlain = lines.join("\n");
+  if (fullPlain.length > usedChars) {
+    html += `<em>— Preview limited to ${MAX_CHARS} characters —</em>`;
+  }
+
+  document.getElementById("preview").innerHTML = html;
 }
 
 function downloadPDF() {
-if (!window.finalLines || window.finalLines.length === 0) {
-alert("Generate preview first");
-return;
+  if (!window.finalLines || window.finalLines.length === 0) {
+    alert("Generate preview first");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+
+  window.finalLines.forEach(item => {
+    doc.setFont("helvetica", item.heading ? "bold" : "normal");
+    const x = item.heading ? 20 : 35;
+
+    const wrapped = doc.splitTextToSize(item.text, 170);
+    wrapped.forEach(line => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(line, x, y);
+      y += 8;
+    });
+
+    y += item.heading ? 6 : 4;
+  });
+
+  doc.save("statement.pdf");
 }
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-let y = 20;
-
-window.finalLines.forEach(item => {
-doc.setFont("helvetica", item.heading ? "bolditalic" : "normal");
-
-// indentation in PDF: headings less indented, sentences more indented
-const x = item.heading ? 20 : 35;
-
-const wrapped = doc.splitTextToSize(item.text, 170);
-wrapped.forEach(line => {
-if (y > 280) {
-doc.addPage();
-y = 20;
-}
-doc.text(line, x, y);
-y += 8;
-});
-
-y += item.heading ? 6 : 4;
-});
-
-doc.save("statement.pdf");
-}
-
-// Basic HTML escaping so user input can't break your preview markup
+// HTML escaping
 function escapeHtml(str) {
-return str
-.replaceAll("&", "&amp;")
-.replaceAll("<", "&lt;")
-.replaceAll(">", "&gt;")
-.replaceAll('"', "&quot;")
-.replaceAll("'", "&#039;");
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 </script>
 
-</body>
-</html>
