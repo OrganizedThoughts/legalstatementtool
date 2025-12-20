@@ -14,7 +14,9 @@ label { font-weight:600; display:block; margin-bottom:5px; }
 input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
-.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: monospace; text-indent: 1.5em; }
+.output { background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: 'Inter', sans-serif; white-space: pre-wrap; }
+.output p { text-indent: 1.5em; margin: 0 0 12px 0; }
+.output strong { color: #1f6feb; }
 </style>
 </head>
 <body>
@@ -69,21 +71,24 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-// Format text: bold subtitles, indent paragraphs
+// Format text for preview (HTML) and PDF
 function formatText(text) {
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  let formatted = "";
-  text.split("\n").forEach(line => {
+  const lines = text.split("\n");
+  let html = "";
+  let pdfText = "";
+  lines.forEach(line => {
     line = line.trim();
-    if (!line) { formatted += "\n"; return; }
+    if (!line) return;
     if (sections.includes(line)) {
-      formatted += line + "\n";
+      html += `<p><strong>${line}</strong></p>`;
+      pdfText += line + "\n";
     } else {
-      // indent each paragraph/sentence
-      formatted += "    " + line + "\n";
+      html += `<p>${line}</p>`;
+      pdfText += "    " + line + "\n";
     }
   });
-  return formatted;
+  return { html, pdfText };
 }
 
 async function generate() {
@@ -113,16 +118,15 @@ ${request}
 
   try {
     const polishedText = await rewriteStatement(rawText);
-    const formatted = formatText(polishedText + `
+    const { html, pdfText } = formatText(polishedText + `
 
 Respectfully submitted,
 ${name}
 _________________________
 Date: ${new Date().toLocaleDateString()}`);
 
-    window.finalText = formatted;
-
-    document.getElementById("preview").innerText = formatted.substring(0, 500) + (formatted.length > 500 ? "\n\n--- Preview Only ---" : "");
+    window.finalText = pdfText;
+    document.getElementById("preview").innerHTML = html.substring(0, 500) + (html.length > 500 ? "<p>--- Preview Only ---</p>" : "");
   } catch(err) { alert(err.message); }
 }
 
