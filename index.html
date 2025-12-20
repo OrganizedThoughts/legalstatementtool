@@ -6,8 +6,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   body { font-family: Arial, sans-serif; }
-  .output { background:#f0f0f0; padding:10px; margin-top:10px; white-space: pre; }
+  .output { background:#f0f0f0; padding:10px; margin-top:10px; white-space: pre-wrap; }
   .heading { font-weight: bold; font-style: italic; }
+  .paragraph { text-indent: 2em; margin-bottom: 1em; }
 </style>
 </head>
 <body>
@@ -34,23 +35,23 @@ I request clarification.
 function showPreview() {
   const raw = document.getElementById("text").value;
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  const paragraphs = raw.split(/\n\n/).filter(p=>p.trim()!=="");
+  const paragraphs = raw.split(/\n\n/).filter(p => p.trim() !== "");
   let html = "";
 
-  paragraphs.forEach(p=>{
-    const lines = p.split("\n").map(l=>l.trim()).filter(l=>l);
-    lines.forEach(line=>{
+  paragraphs.forEach(p => {
+    const lines = p.split("\n").map(l => l.trim()).filter(l => l);
+    lines.forEach((line, index) => {
       if(sections.includes(line)){
         html += `<span class="heading">${line}</span>\n`;
       } else {
-        html += `    ${line}\n`; // prepend spaces for indentation
+        html += `<span class="paragraph">${line}</span>\n`;
       }
     });
     html += "\n";
   });
 
-  // Limit to 500 chars for preview
-  document.getElementById("preview").innerText = html.substring(0,500) + (html.length>500 ? "\n--- Preview Only ---" : "");
+  // Limit preview to 500 characters
+  document.getElementById("preview").innerHTML = html.substring(0, 500) + (html.length > 500 ? "\n--- Preview Only ---" : "");
   window.finalText = paragraphs;
 }
 
@@ -61,13 +62,12 @@ function downloadPDF() {
   let y = 20;
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 
-  window.finalText.forEach(p=>{
-    const lines = p.split("\n").map(l=>l.trim()).filter(l=>l);
-    lines.forEach(line=>{
+  window.finalText.forEach(p => {
+    const lines = p.split("\n").map(l => l.trim()).filter(l => l);
+    lines.forEach(line => {
       const isHeading = sections.includes(line);
-      doc.setFont(undefined, isHeading ? "bold" : "normal");
-      doc.setFont(undefined, isHeading ? "bolditalic" : "normal");
-      const x = isHeading ? 20 : 40; // indent paragraphs
+      doc.setFont("helvetica", isHeading ? "bolditalic" : "normal");
+      const x = isHeading ? 20 : 30; // indent for paragraphs
       doc.text(line, x, y);
       y += 10;
     });
@@ -80,4 +80,3 @@ function downloadPDF() {
 
 </body>
 </html>
-
