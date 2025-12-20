@@ -16,14 +16,14 @@ body { font-family: Arial, sans-serif; }
   white-space: normal;
 }
 
-/* headings are bold */
+/* headings are bold in preview */
 .heading {
   font-weight: bold;
   display: block;
   margin-top: 1em;
 }
 
-/* sentences are indented */
+/* sentences are indented in preview */
 .sentence {
   text-indent: 3em;
   margin-bottom: 0.75em;
@@ -132,7 +132,7 @@ function showPreview() {
   document.getElementById("preview").innerHTML = html;
 }
 
-// Download PDF with bold headings and indented sentences
+// Download PDF with bold + italic headings and indented sentences
 function downloadPDF() {
   if (!window.finalLines || window.finalLines.length === 0) {
     alert("Generate preview first");
@@ -144,8 +144,8 @@ function downloadPDF() {
   let y = 20;
 
   window.finalLines.forEach(item => {
-    // Bold for headings, normal for sentences
-    doc.setFont("helvetica", item.heading ? "bold" : "normal");
+    // Bold + Italic for headings in PDF
+    doc.setFont("helvetica", item.heading ? "bolditalic" : "normal");
     const x = item.heading ? 20 : 35;
 
     const wrapped = doc.splitTextToSize(item.text, 170);
