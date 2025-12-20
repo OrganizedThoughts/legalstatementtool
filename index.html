@@ -26,8 +26,20 @@ body {
 h1 {
   color: #667eea;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   font-size: 28px;
+}
+.disclaimer {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 15px;
+  margin-bottom: 25px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.disclaimer strong {
+  color: #856404;
 }
 .form-group {
   margin-bottom: 20px;
@@ -76,6 +88,12 @@ textarea {
 .btn:active {
   transform: translateY(0);
 }
+.btn-secondary {
+  background: #6c757d;
+}
+.btn-secondary:hover {
+  background: #5a6268;
+}
 .preview-box {
   background: #f8f9fa;
   border: 2px solid #e0e0e0;
@@ -97,6 +115,8 @@ textarea {
 }
 .preview-content {
   line-height: 1.8;
+  max-height: 500px;
+  overflow-y: auto;
 }
 .preview-content .section-title {
   font-weight: bold;
@@ -110,13 +130,28 @@ textarea {
   color: #555;
   margin-bottom: 12px;
 }
-.preview-limit {
+.access-info {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+  border-radius: 8px;
+  padding: 20px;
   margin-top: 20px;
-  padding-top: 20px;
-  border-top: 2px solid #e0e0e0;
-  font-style: italic;
-  color: #999;
   text-align: center;
+}
+.access-info h3 {
+  color: #1976d2;
+  margin-bottom: 10px;
+}
+.access-info .time-remaining {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1976d2;
+  margin: 10px 0;
+}
+.access-info p {
+  font-size: 14px;
+  color: #555;
+  margin-top: 10px;
 }
 .paywall {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -135,9 +170,25 @@ textarea {
   font-weight: bold;
   margin: 15px 0;
 }
-.paywall p {
-  margin-bottom: 20px;
+.paywall .features {
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+.paywall .features ul {
+  list-style: none;
+  padding: 0;
+}
+.paywall .features li {
+  padding: 8px 0;
   font-size: 16px;
+}
+.paywall .features li:before {
+  content: "✓ ";
+  font-weight: bold;
+  margin-right: 8px;
 }
 .gumroad-btn {
   display: inline-block;
@@ -171,43 +222,31 @@ textarea {
 .loading.active {
   display: block;
 }
-.download-section {
-  background: #e8f5e9;
-  border: 2px solid #4caf50;
+.session-locked {
+  background: #ffebee;
+  border: 2px solid #f44336;
   border-radius: 8px;
   padding: 25px;
-  margin-top: 20px;
   text-align: center;
+  margin-top: 20px;
   display: none;
 }
-.download-section.active {
+.session-locked.active {
   display: block;
 }
-.download-section h3 {
-  color: #2e7d32;
+.session-locked h3 {
+  color: #c62828;
   margin-bottom: 15px;
-}
-.download-btn {
-  background: #4caf50;
-  color: white;
-  padding: 16px 40px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.download-btn:hover {
-  background: #45a049;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
 }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>📋 AI Legal Statement Generator</h1>
+  
+  <div class="disclaimer">
+    <strong>⚠️ IMPORTANT DISCLAIMER:</strong> This tool does not provide legal advice and does not represent the work of a licensed attorney. The generated statements are for organizational and communication purposes only. This is not a substitute for professional legal counsel. For legal matters, please consult with a qualified attorney in your jurisdiction.
+  </div>
   
   <form id="statementForm" onsubmit="return false;">
     <div class="form-group">
@@ -265,102 +304,207 @@ textarea {
   </div>
   
   <div class="preview-box" id="previewBox">
-    <div class="preview-title">📄 Preview (Limited to 500 Characters)</div>
+    <div class="preview-title">📄 Your Complete Statement Preview</div>
     <div class="preview-content" id="previewContent"></div>
+    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="editStatement()">✏️ Edit Statement</button>
+  </div>
+  
+  <div class="access-info" id="accessInfo" style="display:none;">
+    <h3>⏰ Active Session</h3>
+    <p>You can edit and regenerate this statement for:</p>
+    <div class="time-remaining" id="timeRemaining">4:00:00</div>
+    <p style="font-size: 12px; color: #666;">
+      Need a different statement for another matter? Each unique statement requires a separate purchase.
+    </p>
+    <button class="btn" style="margin-top: 15px;" onclick="downloadFullPDF()">📥 Download PDF</button>
+    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="regenerateStatement()">🔄 Regenerate Statement</button>
   </div>
   
   <div class="paywall" id="paywall" style="display:none;">
-    <h3>🔓 Unlock Your Full Statement</h3>
+    <h3>🔓 Unlock Your Statement</h3>
     <div class="price">$10</div>
-    <p>Get your complete AI-polished PDF with professional formatting</p>
     
-    <a class="gumroad-button gumroad-btn" href="https://lamotte2.gumroad.com/l/oxhttg" target="_blank">
-      💳 Purchase PDF Access
+    <div class="features">
+      <ul>
+        <li><strong>4 HOURS</strong> of unlimited edits & regenerations for THIS statement</li>
+        <li>Download professional PDF format</li>
+        <li>AI-polished formatting</li>
+        <li>Edit and perfect your statement as many times as needed</li>
+        <li>Secure payment via Gumroad</li>
+      </ul>
+    </div>
+    
+    <a class="gumroad-button gumroad-btn" href="https://lamotte2.gumroad.com/l/oxhttg?wanted=true" target="_blank" onclick="initiatePurchase()">
+      💳 Purchase 4-Hour Access
     </a>
     
     <p class="payment-note">
       ✅ Secure checkout via Gumroad<br>
-      ✅ Accepts PayPal, Credit Cards, Apple Pay & more<br>
-      ✅ Instant download after payment
+      ✅ Accepts PayPal, Credit Cards & more<br>
+      ⚠️ Each unique statement requires a separate purchase
     </p>
   </div>
   
-  <div class="download-section" id="downloadSection">
-    <h3>🔐 Verify Your Purchase</h3>
-    <p style="color: #333; margin-bottom: 15px;">Enter the license key from your Gumroad purchase email:</p>
-    <input type="text" id="licenseKey" placeholder="Enter your license key" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #4caf50; border-radius: 8px; margin-bottom: 15px; font-size: 14px;">
-    <br>
-    <button class="download-btn" onclick="verifyAndDownload()">🔓 Verify & Download PDF</button>
-    <p style="font-size: 12px; color: #666; margin-top: 15px;">Check your email from Gumroad for your license key</p>
+  <div class="session-locked" id="sessionLocked">
+    <h3>⏰ Session Expired</h3>
+    <p style="margin-bottom: 20px;">Your 4-hour access period has ended. To continue editing or generate a new statement, please purchase again.</p>
+    <a class="gumroad-btn" href="https://lamotte2.gumroad.com/l/oxhttg" target="_blank">
+      💳 Purchase New Access
+    </a>
   </div>
 </div>
 
 <script>
 let fullStatement = "";
 let statementData = {};
+let sessionId = null;
+let expirationTime = null;
+let timerInterval = null;
 
-// Check if user came back from Gumroad purchase
+// Check for active session on load
 window.addEventListener('load', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('purchased') === 'true') {
-    // User completed purchase, show verification section
-    document.getElementById('downloadSection').classList.add('active');
-    // Try to retrieve saved statement from localStorage
-    const savedStatement = localStorage.getItem('pendingStatement');
-    if (savedStatement) {
-      fullStatement = savedStatement;
+  checkSession();
+});
+
+function checkSession() {
+  const storedSessionId = localStorage.getItem('statementSessionId');
+  const storedExpiration = localStorage.getItem('sessionExpiration');
+  const storedStatement = localStorage.getItem('sessionStatement');
+  const storedData = localStorage.getItem('sessionData');
+  
+  if (storedSessionId && storedExpiration) {
+    const now = new Date().getTime();
+    const expiration = parseInt(storedExpiration);
+    
+    if (now < expiration) {
+      // Session is still valid
+      sessionId = storedSessionId;
+      expirationTime = expiration;
+      fullStatement = storedStatement || "";
+      statementData = storedData ? JSON.parse(storedData) : {};
+      
+      if (fullStatement) {
+        displayPreview(fullStatement);
+        showAccessInfo();
+        startTimer();
+      }
+    } else {
+      // Session expired
+      clearSession();
+      document.getElementById('sessionLocked').classList.add('active');
     }
+  }
+}
+
+function initiatePurchase() {
+  // Store current statement data for after purchase
+  localStorage.setItem('pendingStatement', fullStatement);
+  localStorage.setItem('pendingData', JSON.stringify(statementData));
+  localStorage.setItem('purchaseInitiated', 'true');
+}
+
+// Listen for when user returns from Gumroad
+window.addEventListener('focus', function() {
+  if (localStorage.getItem('purchaseInitiated') === 'true') {
+    // Give user a moment, then check if they completed purchase
+    setTimeout(function() {
+      const verified = prompt("Did you complete your purchase? If yes, type 'YES' to activate your 4-hour access:");
+      if (verified && verified.toLowerCase() === 'yes') {
+        activateSession();
+      }
+      localStorage.removeItem('purchaseInitiated');
+    }, 1000);
   }
 });
 
-async function verifyAndDownload() {
-  const licenseKey = document.getElementById('licenseKey').value.trim();
+function activateSession() {
+  // Generate unique session ID
+  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   
-  if (!licenseKey) {
-    alert("⚠️ Please enter your license key from the Gumroad purchase email.");
-    return;
+  // Set 4-hour expiration
+  const now = new Date().getTime();
+  expirationTime = now + (4 * 60 * 60 * 1000); // 4 hours in milliseconds
+  
+  // Store session
+  localStorage.setItem('statementSessionId', sessionId);
+  localStorage.setItem('sessionExpiration', expirationTime.toString());
+  
+  // Restore statement
+  fullStatement = localStorage.getItem('pendingStatement') || fullStatement;
+  const pendingData = localStorage.getItem('pendingData');
+  if (pendingData) {
+    statementData = JSON.parse(pendingData);
+    restoreFormData();
   }
   
-  if (!fullStatement) {
-    alert("⚠️ Please generate a statement first.");
-    return;
-  }
+  localStorage.setItem('sessionStatement', fullStatement);
+  localStorage.setItem('sessionData', JSON.stringify(statementData));
   
-  // Show loading state
-  const btn = event.target;
-  const originalText = btn.textContent;
-  btn.textContent = "🔄 Verifying...";
-  btn.disabled = true;
+  // Show access info
+  document.getElementById('paywall').style.display = 'none';
+  showAccessInfo();
+  startTimer();
   
-  try {
-    // Verify with your API
-    const response = await fetch("/api/verify-purchase", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        license_key: licenseKey,
-        product_permalink: "oxhttg" // CHANGE THIS to your Gumroad product permalink
-      })
-    });
+  alert("✅ Your 4-hour access is now active! You can edit and regenerate this statement as many times as needed.");
+}
+
+function showAccessInfo() {
+  document.getElementById('accessInfo').style.display = 'block';
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  
+  timerInterval = setInterval(function() {
+    const now = new Date().getTime();
+    const remaining = expirationTime - now;
     
-    const data = await response.json();
-    
-    if (data.verified) {
-      // Valid purchase - allow download
-      alert("✅ Purchase verified! Downloading your PDF...");
-      downloadFullPDF();
-    } else {
-      alert("❌ Invalid license key. Please check your Gumroad email and try again.");
-      btn.textContent = originalText;
-      btn.disabled = false;
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      sessionExpired();
+      return;
     }
     
-  } catch (error) {
-    console.error("Verification error:", error);
-    alert("⚠️ Verification failed. Please try again.");
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    
+    document.getElementById('timeRemaining').textContent = 
+      `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }, 1000);
+}
+
+function sessionExpired() {
+  clearSession();
+  document.getElementById('accessInfo').style.display = 'none';
+  document.getElementById('previewBox').classList.remove('active');
+  document.getElementById('sessionLocked').classList.add('active');
+  alert("⏰ Your 4-hour access has expired. Purchase again to create or edit statements.");
+}
+
+function clearSession() {
+  localStorage.removeItem('statementSessionId');
+  localStorage.removeItem('sessionExpiration');
+  localStorage.removeItem('sessionStatement');
+  localStorage.removeItem('sessionData');
+  sessionId = null;
+  expirationTime = null;
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function restoreFormData() {
+  if (statementData.name) document.getElementById('name').value = statementData.name;
+  if (statementData.state) document.getElementById('state').value = statementData.state;
+  if (statementData.matter) document.getElementById('matter').value = statementData.matter;
+  if (statementData.recipient) document.getElementById('recipient').value = statementData.recipient;
+  if (statementData.facts) document.getElementById('facts').value = statementData.facts;
+  if (statementData.concerns) document.getElementById('concerns').value = statementData.concerns;
+  if (statementData.request) document.getElementById('request').value = statementData.request;
+}
+
+function editStatement() {
+  // Just scroll back up to form - they can edit and regenerate
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function generateStatement() {
@@ -410,11 +554,19 @@ ${request}
     
     fullStatement = polishedText + `\n\nRespectfully submitted,\n${name}\n_________________________\nDate: ${new Date().toLocaleDateString()}`;
     
-    // Save statement for after payment
-    localStorage.setItem('pendingStatement', fullStatement);
+    // Update session storage if active
+    if (sessionId) {
+      localStorage.setItem('sessionStatement', fullStatement);
+      localStorage.setItem('sessionData', JSON.stringify(statementData));
+    }
     
     displayPreview(fullStatement);
-    document.getElementById("paywall").style.display = "block";
+    
+    if (sessionId) {
+      showAccessInfo();
+    } else {
+      document.getElementById("paywall").style.display = "block";
+    }
     
   } catch (error) {
     alert("Failed to generate statement. Please try again.");
@@ -424,15 +576,20 @@ ${request}
   }
 }
 
+function regenerateStatement() {
+  if (!sessionId) {
+    alert("Please purchase access first");
+    return;
+  }
+  generateStatement();
+}
+
 function displayPreview(text) {
   const lines = text.split('\n');
   let html = '';
-  let charCount = 0;
-  const CHAR_LIMIT = 500;
   
   for (let line of lines) {
     line = line.trim();
-    // Remove any ** markdown formatting
     line = line.replace(/\*\*/g, '');
     if (!line) continue;
     
@@ -445,23 +602,8 @@ function displayPreview(text) {
     if (isHeading) {
       html += `<div class="section-title">${escapeHtml(line)}</div>`;
     } else {
-      const remaining = CHAR_LIMIT - charCount;
-      if (remaining <= 0) break;
-      
-      let displayText = line;
-      if (line.length > remaining) {
-        displayText = line.substring(0, remaining) + '...';
-      }
-      
-      html += `<div class="section-text">${escapeHtml(displayText)}</div>`;
-      charCount += displayText.length;
-      
-      if (displayText.endsWith('...')) break;
+      html += `<div class="section-text">${escapeHtml(line)}</div>`;
     }
-  }
-  
-  if (charCount >= CHAR_LIMIT) {
-    html += '<div class="preview-limit">Preview limited to 500 characters. Purchase to download full statement.</div>';
   }
   
   document.getElementById("previewContent").innerHTML = html;
@@ -475,6 +617,11 @@ function escapeHtml(text) {
 }
 
 function downloadFullPDF() {
+  if (!sessionId) {
+    alert("Please purchase access first");
+    return;
+  }
+  
   if (!fullStatement) {
     alert("Please generate a statement first");
     return;
@@ -499,7 +646,6 @@ function downloadFullPDF() {
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   
-  // Clean up any markdown formatting (** for bold)
   const cleanedStatement = fullStatement.replace(/\*\*/g, '');
   const lines = cleanedStatement.split('\n');
   
@@ -545,9 +691,6 @@ function downloadFullPDF() {
   }
   
   doc.save("legal-statement.pdf");
-  
-  // Clear saved statement after download
-  localStorage.removeItem('pendingStatement');
 }
 </script>
 </body>
