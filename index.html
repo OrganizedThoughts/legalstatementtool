@@ -406,20 +406,54 @@ function initiatePurchase() {
 // Listen for when user returns from Gumroad
 window.addEventListener('focus', function() {
   if (localStorage.getItem('purchaseInitiated') === 'true') {
-    // Give user a moment, then check if they completed purchase
+    // Give user a moment, then ask for license key
     setTimeout(function() {
-      const verified = prompt("Did you complete your purchase? If yes, type 'YES' to activate your 4-hour access:");
-      if (verified && verified.toLowerCase() === 'yes') {
-        activateSession();
-      }
+      showLicenseKeyPrompt();
       localStorage.removeItem('purchaseInitiated');
     }, 1000);
   }
 });
 
-function activateSession() {
-  // Generate unique session ID
-  sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+function showLicenseKeyPrompt() {
+  const licenseKey = prompt("Welcome back! Please enter the license key from your Gumroad purchase email to activate your 4-hour access:");
+  if (licenseKey && licenseKey.trim().length > 0) {
+    verifyLicenseKey(licenseKey.trim());
+  }
+}
+
+async function verifyLicenseKey(licenseKey) {
+  // Show loading
+  alert("🔄 Verifying your purchase...");
+  
+  try {
+    const response = await fetch("/api/verify-purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        license_key: licenseKey,
+        product_permalink: "oxhttg"
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.verified) {
+      activateSession(licenseKey);
+    } else {
+      alert("❌ Invalid license key. Please check your Gumroad email and try again. The license key should be in your purchase confirmation email.");
+      // Ask again
+      setTimeout(showLicenseKeyPrompt, 500);
+    }
+  } catch (error) {
+    console.error("Verification error:", error);
+    alert("⚠️ Verification failed. Please check your internet connection and try again.");
+    setTimeout(showLicenseKeyPrompt, 500);
+  }
+}
+
+function activateSession(licenseKey) {
+  // Generate unique session ID using license key
+  sessionId = 'session_' + licenseKey + '_' + Date.now();
   
   // Set 4-hour expiration
   const now = new Date().getTime();
