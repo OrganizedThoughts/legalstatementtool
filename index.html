@@ -6,21 +6,26 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   body { font-family: Arial, sans-serif; }
+  
+  /* Preview container */
   .output { 
     background: #f0f0f0; 
     padding: 10px; 
     margin-top: 10px; 
-    white-space: normal; /* allow text-indent to work */
   }
+
+  /* Headings */
   .heading { 
     font-weight: bold; 
     font-style: italic; 
     margin-top: 1em; 
     margin-bottom: 0.3em;
   }
+
+  /* Paragraphs / sentences */
   .paragraph { 
-    text-indent: 2em;  /* visible indentation */
-    margin-bottom: 0.8em;
+    margin-left: 2em;      /* proper indentation */
+    margin-bottom: 0.8em;  /* spacing between sentences */
   }
 </style>
 </head>
@@ -49,7 +54,7 @@ function showPreview() {
   const rawText = document.getElementById("text").value;
   const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 
-  // Split text into paragraphs by double newlines
+  // Split text by double line breaks
   const paragraphs = rawText.split(/\n\n/).filter(p => p.trim() !== "");
 
   let html = "";
@@ -65,10 +70,10 @@ function showPreview() {
     });
   });
 
-  // Limit preview to 500 characters (keep HTML structure intact)
+  // Limit preview to 500 characters (keep HTML tags intact)
   let previewText = html;
   if(previewText.length > 500){
-    previewText = previewText.substring(0,500) + "<div>--- Preview Only ---</div>";
+    previewText = previewText.substring(0, 500) + "<div>--- Preview Only ---</div>";
   }
 
   document.getElementById("preview").innerHTML = previewText;
@@ -87,11 +92,11 @@ function downloadPDF() {
     lines.forEach(line => {
       const isHeading = headings.includes(line);
       doc.setFont("helvetica", isHeading ? "bolditalic" : "normal");
-      const x = isHeading ? 20 : 30; // indent for sentences under headings
+      const x = isHeading ? 20 : 30; // indent paragraph lines under headings
       doc.text(line, x, y);
-      y += 10;
+      y += 10; // line spacing
     });
-    y += 5; // extra space between paragraphs
+    y += 5; // spacing between paragraphs
   });
 
   doc.save("statement.pdf");
@@ -100,3 +105,4 @@ function downloadPDF() {
 
 </body>
 </html>
+
