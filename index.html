@@ -54,6 +54,7 @@ button:hover { background:#155bcf; }
 </div>
 
 <button onclick="generate()">Generate AI Preview</button>
+<button onclick="downloadPDF()">Download PDF</button>
 <div id="preview" class="output"></div>
 
 <script>
@@ -68,7 +69,7 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-// Format text for PDF and preview: bold subtitles, paragraph indentation
+// Format text: bold subtitles, indent paragraphs
 function formatText(text) {
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
   let formatted = "";
@@ -78,6 +79,7 @@ function formatText(text) {
     if (sections.includes(line)) {
       formatted += line + "\n";
     } else {
+      // indent each paragraph/sentence
       formatted += "    " + line + "\n";
     }
   });
@@ -120,11 +122,12 @@ Date: ${new Date().toLocaleDateString()}`);
 
     window.finalText = formatted;
 
-    document.getElementById("preview").innerText = formatted.substring(0, 350) + (formatted.length > 350 ? "\n\n--- Preview Only ---" : "");
+    document.getElementById("preview").innerText = formatted.substring(0, 500) + (formatted.length > 500 ? "\n\n--- Preview Only ---" : "");
   } catch(err) { alert(err.message); }
 }
 
 function downloadPDF() {
+  if (!window.finalText) return alert("Please generate the preview first!");
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const margin = 40;
@@ -136,16 +139,15 @@ function downloadPDF() {
   y += 30;
 
   doc.setFontSize(12);
-  const paragraphs = window.finalText.split("\n\n");
+  const lines = window.finalText.split("\n");
   const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  paragraphs.forEach(p => {
-    const trimmed = p.trim();
-    if (!trimmed) return;
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return y += 12;
     const isHeading = headings.some(h => trimmed.includes(h));
     doc.setFont(undefined, isHeading ? "bold" : "normal");
-    const lines = doc.splitTextToSize(trimmed, 520);
-    lines.forEach(l => { doc.text(l, margin, y); y += 18; });
-    y += 12;
+    const splitLines = doc.splitTextToSize(trimmed, 520);
+    splitLines.forEach(l => { doc.text(l, margin, y); y += 18; });
   });
   doc.save("legal-statement.pdf");
 }
