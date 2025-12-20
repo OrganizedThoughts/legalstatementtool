@@ -19,8 +19,8 @@
     margin-bottom: 0.3em;
   }
   .paragraph { 
-    text-indent: 2em;  /* proper paragraph indentation */
-    margin-bottom: 0.8em; /* spacing between sentences */
+    text-indent: 2em;  /* visible indentation */
+    margin-bottom: 0.8em;
   }
 </style>
 </head>
@@ -49,7 +49,7 @@ function showPreview() {
   const rawText = document.getElementById("text").value;
   const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 
-  // Split text into paragraphs by double line breaks
+  // Split text into paragraphs by double newlines
   const paragraphs = rawText.split(/\n\n/).filter(p => p.trim() !== "");
 
   let html = "";
@@ -57,7 +57,7 @@ function showPreview() {
   paragraphs.forEach(paragraph => {
     const lines = paragraph.split("\n").filter(l => l.trim() !== "");
     lines.forEach(line => {
-      if(headings.includes(line)) {
+      if (headings.includes(line)) {
         html += `<div class="heading">${line}</div>`;
       } else {
         html += `<div class="paragraph">${line}</div>`;
@@ -65,10 +65,10 @@ function showPreview() {
     });
   });
 
-  // Limit preview to 500 characters without breaking HTML tags
+  // Limit preview to 500 characters (keep HTML structure intact)
   let previewText = html;
-  if(previewText.length > 500) {
-    previewText = previewText.substring(0, 500) + "<div>--- Preview Only ---</div>";
+  if(previewText.length > 500){
+    previewText = previewText.substring(0,500) + "<div>--- Preview Only ---</div>";
   }
 
   document.getElementById("preview").innerHTML = previewText;
@@ -76,7 +76,7 @@ function showPreview() {
 }
 
 function downloadPDF() {
-  if(!window.finalText) { alert("Generate preview first"); return; }
+  if (!window.finalText) { alert("Generate preview first"); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 20;
@@ -87,9 +87,9 @@ function downloadPDF() {
     lines.forEach(line => {
       const isHeading = headings.includes(line);
       doc.setFont("helvetica", isHeading ? "bolditalic" : "normal");
-      const x = isHeading ? 20 : 30; // indent paragraphs under headings
+      const x = isHeading ? 20 : 30; // indent for sentences under headings
       doc.text(line, x, y);
-      y += 10; // line spacing
+      y += 10;
     });
     y += 5; // extra space between paragraphs
   });
@@ -100,4 +100,3 @@ function downloadPDF() {
 
 </body>
 </html>
-
