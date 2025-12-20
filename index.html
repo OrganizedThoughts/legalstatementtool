@@ -17,7 +17,7 @@ body { font-family: Arial, sans-serif; }
   margin-top: 1em;
 }
 .sentence {
-  text-indent: 2em;
+  text-indent: 2em; /* Indent the first line of each sentence */
   margin: 0.5em 0;
 }
 </style>
@@ -46,15 +46,18 @@ const SECTIONS = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
 const MAX_CHARS = 500;
 window.finalLines = [];
 
+// Split text into sentences
 function splitSentences(text) {
   return text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [];
 }
 
+// Escape HTML for preview
 function escapeHtml(str) {
   return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
+// Show preview with subtitles and indented sentences
 function showPreview() {
   const raw = document.getElementById("text").value.trim();
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
@@ -95,6 +98,7 @@ function showPreview() {
   document.getElementById("preview").innerHTML = html;
 }
 
+// Download PDF with subtitles and indented sentences
 function downloadPDF() {
   if (!window.finalLines || window.finalLines.length === 0) {
     alert("Generate preview first");
@@ -107,7 +111,7 @@ function downloadPDF() {
 
   window.finalLines.forEach(item => {
     doc.setFont("helvetica", "normal");
-    const x = item.heading ? 20 : 35; // indent sentences, subtitles normal
+    const x = item.heading ? 20 : 35; // indent only sentences
 
     const wrapped = doc.splitTextToSize(item.text, 170);
     wrapped.forEach(line => {
@@ -116,9 +120,7 @@ function downloadPDF() {
       y += 8;
     });
 
-    // Extra spacing after subtitles
-    y += item.heading ? 6 : 4;
-    if (item.heading) y += 4; // additional space between sections
+    y += item.heading ? 6 : 4; // extra spacing after subtitles
   });
 
   doc.save("statement.pdf");
