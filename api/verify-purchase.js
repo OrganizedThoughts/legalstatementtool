@@ -18,7 +18,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Verify with Gumroad API
     const gumroadResponse = await fetch("https://api.gumroad.com/v2/licenses/verify", {
       method: "POST",
       headers: {
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
     const data = await gumroadResponse.json();
 
     if (data.success && data.purchase) {
-      // Valid purchase!
       return res.status(200).json({
         verified: true,
         purchase_email: data.purchase.email,
