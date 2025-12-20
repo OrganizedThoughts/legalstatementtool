@@ -14,7 +14,7 @@ label { font-weight:600; display:block; margin-bottom:5px; }
 input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
-.output { background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: 'Inter', sans-serif; white-space: pre-wrap; }
+.output { background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: 'Inter', sans-serif; }
 .output p { text-indent: 1.5em; margin: 0 0 12px 0; }
 .output strong { color: #1f6feb; }
 </style>
@@ -71,8 +71,8 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-// Format text for preview (HTML) and PDF
-function formatText(text) {
+// Format text for HTML preview and PDF
+function formatTextForDisplay(text) {
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
   const lines = text.split("\n");
   let html = "";
@@ -118,7 +118,7 @@ ${request}
 
   try {
     const polishedText = await rewriteStatement(rawText);
-    const { html, pdfText } = formatText(polishedText + `
+    const { html, pdfText } = formatTextForDisplay(polishedText + `
 
 Respectfully submitted,
 ${name}
@@ -143,16 +143,16 @@ function downloadPDF() {
   y += 30;
 
   doc.setFontSize(12);
-  const lines = window.finalText.split("\n");
   const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  lines.forEach(line => {
+  window.finalText.split("\n").forEach(line => {
     const trimmed = line.trim();
-    if (!trimmed) return y += 12;
-    const isHeading = headings.some(h => trimmed.includes(h));
+    if (!trimmed) { y += 12; return; }
+    const isHeading = headings.includes(trimmed);
     doc.setFont(undefined, isHeading ? "bold" : "normal");
     const splitLines = doc.splitTextToSize(trimmed, 520);
     splitLines.forEach(l => { doc.text(l, margin, y); y += 18; });
   });
+
   doc.save("legal-statement.pdf");
 }
 </script>
