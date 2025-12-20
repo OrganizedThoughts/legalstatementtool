@@ -14,7 +14,7 @@ label { font-weight:600; display:block; margin-bottom:5px; }
 input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
 button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
 button:hover { background:#155bcf; }
-.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: monospace; }
+.output { white-space: pre-wrap; background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: monospace; text-indent: 1.5em; }
 </style>
 </head>
 <body>
@@ -68,8 +68,20 @@ async function rewriteStatement(text) {
   return data.result;
 }
 
-function indentSentences(text) {
-  return text.replace(/(?<=\. |\? |\! )/g, "\n    ").replace(/^/, "    ");
+// Format text for PDF and preview: bold subtitles, paragraph indentation
+function formatText(text) {
+  const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+  let formatted = "";
+  text.split("\n").forEach(line => {
+    line = line.trim();
+    if (!line) { formatted += "\n"; return; }
+    if (sections.includes(line)) {
+      formatted += line + "\n";
+    } else {
+      formatted += "    " + line + "\n";
+    }
+  });
+  return formatted;
 }
 
 async function generate() {
@@ -99,28 +111,24 @@ ${request}
 
   try {
     const polishedText = await rewriteStatement(rawText);
+    const formatted = formatText(polishedText + `
 
-    // Indent every sentence
-    const indentedText = indentSentences(polishedText);
+Respectfully submitted,
+${name}
+_________________________
+Date: ${new Date().toLocaleDateString()}`);
 
-    window.finalText = indentedText + `
+    window.finalText = formatted;
 
-    Respectfully submitted,
-    ${name}
-    _________________________
-    Date: ${new Date().toLocaleDateString()}
-    `;
-
-    document.getElementById("preview").innerText =
-      window.finalText.substring(0, 150) + "\n\n--- Preview Only ---";
-  } catch (err) { alert(err.message); }
+    document.getElementById("preview").innerText = formatted.substring(0, 350) + (formatted.length > 350 ? "\n\n--- Preview Only ---" : "");
+  } catch(err) { alert(err.message); }
 }
 
 function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const margin = 40;
-  let y = 40;
+  let y = margin;
 
   doc.setFontSize(16);
   doc.setFont(undefined, "bold");
@@ -128,28 +136,20 @@ function downloadPDF() {
   y += 30;
 
   doc.setFontSize(12);
-  const paragraphs = window.finalText.split(/\n\s*\n/);
-
-  paragraphs.forEach(paragraph => {
-    const trimmed = paragraph.trim();
+  const paragraphs = window.finalText.split("\n\n");
+  const headings = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+  paragraphs.forEach(p => {
+    const trimmed = p.trim();
     if (!trimmed) return;
-
-    const isHeading = /SUMMARY OF EVENTS:|KEY CONCERNS:|REQUEST \/ PURPOSE:/.test(trimmed);
+    const isHeading = headings.some(h => trimmed.includes(h));
     doc.setFont(undefined, isHeading ? "bold" : "normal");
-
-    const sentences = trimmed.split(/(?<=[.?!])\s+/);
-    sentences.forEach(sentence => {
-      const line = sentence.trim();
-      if (!line) return;
-      const indentedLine = isHeading ? line : "    " + line;
-      const lines = doc.splitTextToSize(indentedLine, 520);
-      lines.forEach(l => { doc.text(l, margin, y); y += 18; });
-    });
+    const lines = doc.splitTextToSize(trimmed, 520);
+    lines.forEach(l => { doc.text(l, margin, y); y += 18; });
     y += 12;
   });
+  doc.save("legal-statement.pdf");
 }
 </script>
 </div>
 </body>
 </html>
-
