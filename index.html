@@ -1,16 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Legal Statement Organizer</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
+body { font-family: Arial, sans-serif; }
+
+.output {
+  background: #f0f0f0;
+  padding: 12px;
+  margin-top: 10px;
+  white-space: normal;
+}
+
+/* headings are bold */
 .heading {
-  font-weight: bold; /* bold only */
+  font-weight: bold;
   display: block;
   margin-top: 1em;
 }
 
+/* sentences are indented */
 .sentence {
-  text-indent: 3em; /* indent sentences */
+  text-indent: 3em;
   margin-bottom: 0.75em;
   display: block;
 }
 </style>
+</head>
+
+<body>
+
+<textarea id="text" rows="10" style="width:100%;">
+SUMMARY OF EVENTS:
+This is the first event. It continues here.
+
+KEY CONCERNS:
+Concern one. Concern two.
+
+REQUEST / PURPOSE:
+I request clarification.
+</textarea>
+
+<br><br>
+
+<button onclick="showPreview()">Preview</button>
+<button onclick="downloadPDF()">PDF</button>
+
+<div id="preview" class="output"></div>
 
 <script>
 const SECTIONS = [
@@ -21,10 +61,22 @@ const SECTIONS = [
 const MAX_CHARS = 500;
 window.finalLines = [];
 
+// Split text into sentences
 function splitSentences(text) {
   return text.match(/[^.!?]+[.!?]*/g)?.map(s => s.trim()).filter(Boolean) || [];
 }
 
+// Escape HTML for safe preview
+function escapeHtml(str) {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// Show preview, limited to MAX_CHARS
 function showPreview() {
   const raw = document.getElementById("text").value.trim();
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
@@ -80,6 +132,7 @@ function showPreview() {
   document.getElementById("preview").innerHTML = html;
 }
 
+// Download PDF with bold headings and indented sentences
 function downloadPDF() {
   if (!window.finalLines || window.finalLines.length === 0) {
     alert("Generate preview first");
@@ -91,6 +144,7 @@ function downloadPDF() {
   let y = 20;
 
   window.finalLines.forEach(item => {
+    // Bold for headings, normal for sentences
     doc.setFont("helvetica", item.heading ? "bold" : "normal");
     const x = item.heading ? 20 : 35;
 
@@ -109,15 +163,7 @@ function downloadPDF() {
 
   doc.save("statement.pdf");
 }
-
-function escapeHtml(str) {
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 </script>
 
-
+</body>
+</html>
