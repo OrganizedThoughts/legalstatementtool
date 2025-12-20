@@ -2,156 +2,75 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Legal Statement Organizer - Format Test</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal Statement Organizer</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; background: #f0f9ff; color: #333; }
-.container { max-width: 750px; margin:auto; background:white; padding:30px 25px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1); }
-h2 { color:#1f6feb; font-weight:600; text-align:center; margin-bottom:20px; }
-label { font-weight:600; display:block; margin-bottom:5px; }
-input, textarea, select { width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
-button { padding:14px; width:100%; background:#1f6feb; color:white; border:none; font-size:16px; border-radius:8px; cursor:pointer; }
-button:hover { background:#155bcf; }
-.output { background:#f9f9f9; padding:15px; margin-top:20px; border-radius:8px; border:1px solid #e0e0e0; font-family: 'Inter', sans-serif; }
-.output p { text-indent: 1.5em; margin: 0 0 12px 0; }
-.output strong { color: #1f6feb; }
+  body { font-family: Arial, sans-serif; }
+  .output { background:#f0f0f0; padding:10px; margin-top:10px; }
+  .output p { text-indent: 1.5em; margin: 0 0 10px 0; }
+  .output strong { color: blue; }
 </style>
 </head>
 <body>
-<div class="container">
-<h2>AI Legal Statement Organizer (Format Test)</h2>
 
-<div>
-<label>📝 Your Full Legal Name</label>
-<input id="name">
-<label>State (optional)</label>
-<input id="state" placeholder="e.g., New York">
-<label>Type of Matter</label>
-<select id="matter">
-  <option>Family Court</option>
-  <option>Custody / Visitation</option>
-  <option>Child Support</option>
-  <option>Divorce</option>
-  <option>Landlord / Tenant</option>
-  <option>Civil Matter</option>
-  <option>Other Legal Matter</option>
-</select>
-<label>Who is this statement for?</label>
-<select id="recipient">
-  <option>My Attorney</option>
-  <option>The Court</option>
-  <option>Both</option>
-</select>
-</div>
+<textarea id="text" rows="10" style="width:100%;">
+SUMMARY OF EVENTS:
+This is the first event.
+It continues here.
 
-<div>
-<label>Chronological Summary of Events (facts only)</label>
-<textarea id="facts" rows="5"></textarea>
-<label>Key Concerns or Issues</label>
-<textarea id="concerns" rows="4"></textarea>
-<label>What outcome or clarification are you requesting?</label>
-<textarea id="request" rows="3"></textarea>
-</div>
+KEY CONCERNS:
+Concern one.
+Concern two.
 
-<button onclick="generate()">Generate AI Preview</button>
-<button onclick="downloadPDF()">Download PDF</button>
+REQUEST / PURPOSE:
+I request clarification.
+</textarea>
+
+<button onclick="showPreview()">Preview</button>
+<button onclick="downloadPDF()">PDF</button>
+
 <div id="preview" class="output"></div>
 
 <script>
-async function rewriteStatement(text) {
-  const response = await fetch("/api/rewrite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
-  if (!response.ok) throw new Error("AI failed");
-  const data = await response.json();
-  return data.result;
-}
-
-function formatText(text) {
+function showPreview() {
+  const raw = document.getElementById("text").value;
   const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
-  const paragraphs = text.split(/\n+/).filter(p => p.trim() !== "");
+  const paragraphs = raw.split(/\n\n/);
   let html = "";
-  let pdfText = [];
-
   paragraphs.forEach(p => {
-    if (sections.includes(p.trim())) {
-      html += `<p><strong>${p.trim()}</strong></p>`;
-      pdfText.push({ text: p.trim(), bold: true });
-    } else {
-      html += `<p>${p.trim()}</p>`;
-      pdfText.push({ text: p.trim(), bold: false });
-    }
+    const lines = p.split("\n").map(l => l.trim()).filter(l=>l);
+    lines.forEach((line,i)=>{
+      if(sections.includes(line)){
+        html += `<p><strong>${line}</strong></p>`;
+      } else {
+        html += `<p>${line}</p>`;
+      }
+    });
   });
-
-  return { html, pdfText };
-}
-
-async function generate() {
-  const name = document.getElementById("name").value || "[Name]";
-  const state = document.getElementById("state").value || "the applicable jurisdiction";
-  const matter = document.getElementById("matter").value;
-  const recipient = document.getElementById("recipient").value;
-  const facts = document.getElementById("facts").value || "[Summary of events]";
-  const concerns = document.getElementById("concerns").value || "[Key concerns]";
-  const request = document.getElementById("request").value || "[Requested outcome]";
-
-  const rawText = `
-Name: ${name}
-State: ${state}
-Matter Type: ${matter}
-Recipient: ${recipient}
-
-SUMMARY OF EVENTS:
-${facts}
-
-KEY CONCERNS:
-${concerns}
-
-REQUEST / PURPOSE:
-${request}
-
-Respectfully submitted,
-${name}
-_________________________
-Date: ${new Date().toLocaleDateString()}
-`;
-
-  try {
-    const polishedText = await rewriteStatement(rawText);
-    const { html, pdfText } = formatText(polishedText);
-
-    window.finalPDFText = pdfText;
-    document.getElementById("preview").innerHTML = html.join("").substring(0, 500) + (html.join("").length > 500 ? "<p>--- Preview Only ---</p>" : "");
-  } catch(err) { alert(err.message); }
+  document.getElementById("preview").innerHTML = html;
+  window.finalText = paragraphs;
 }
 
 function downloadPDF() {
-  if (!window.finalPDFText) return alert("Generate preview first!");
+  if(!window.finalText){ alert("Generate preview first"); return; }
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
-  const margin = 40;
-  let y = margin;
-
-  doc.setFontSize(16);
-  doc.setFont(undefined, "bold");
-  doc.text("STATEMENT FOR LEGAL COMMUNICATION", margin, y);
-  y += 30;
-
-  doc.setFontSize(12);
-  window.finalPDFText.forEach(p => {
-    doc.setFont(undefined, p.bold ? "bold" : "normal");
-    const lines = doc.splitTextToSize(p.text, 520);
-    lines.forEach(line => { doc.text(line, margin + (p.bold ? 0 : 20), y); y += 18; });
-    y += 6;
+  const doc = new jsPDF();
+  let y = 20;
+  const sections = ["SUMMARY OF EVENTS:", "KEY CONCERNS:", "REQUEST / PURPOSE:"];
+  window.finalText.forEach(p=>{
+    const lines = p.split("\n").map(l=>l.trim()).filter(l=>l);
+    lines.forEach(line=>{
+      const isHeading = sections.includes(line);
+      doc.setFont(undefined, isHeading ? "bold" : "normal");
+      const x = isHeading ? 20 : 30;
+      doc.text(line, x, y);
+      y += 10;
+    });
+    y += 5;
   });
-
-  doc.save("legal-statement.pdf");
+  doc.save("statement.pdf");
 }
 </script>
-</div>
+
 </body>
 </html>
