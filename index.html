@@ -261,7 +261,7 @@ textarea {
     
     <div class="form-group">
       <label>⚖️ Type of Matter</label>
-      <select id="matter">
+      <select id="matter" onchange="handleMatterChange()">
         <option>Family Court</option>
         <option>Custody / Visitation</option>
         <option>Child Support</option>
@@ -278,21 +278,57 @@ textarea {
         <option>My Attorney</option>
         <option>The Court</option>
         <option>Both</option>
+        <option>Landlord</option>
       </select>
     </div>
     
+    <div id="landlordFields" style="display:none;">
+      <div class="form-group">
+        <label>🏠 Property Address</label>
+        <input type="text" id="propertyAddress" placeholder="Enter the rental property address">
+      </div>
+      
+      <div class="form-group">
+        <label>📅 Lease Start Date</label>
+        <input type="date" id="leaseStart">
+      </div>
+      
+      <div class="form-group">
+        <label>📋 Issue/Complaint Type</label>
+        <select id="issueType">
+          <option>Maintenance/Repairs</option>
+          <option>Habitability Concerns</option>
+          <option>Security Deposit</option>
+          <option>Rent Payment Dispute</option>
+          <option>Lease Violation</option>
+          <option>Eviction Notice Response</option>
+          <option>Other</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>📅 Timeline of Issue</label>
+        <textarea id="landlordTimeline" rows="5" placeholder="When did this issue begin? What attempts have been made to resolve it?"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>📸 Documentation Available</label>
+        <textarea id="documentation" rows="3" placeholder="List any photos, emails, texts, repair requests, or other documentation you have..."></textarea>
+      </div>
+    </div>
+    
     <div class="form-group">
-      <label>📅 Chronological Summary of Events (Facts Only)</label>
+      <label id="factsLabel">📅 Chronological Summary of Events (Facts Only)</label>
       <textarea id="facts" rows="5" placeholder="Describe the events in chronological order..."></textarea>
     </div>
     
     <div class="form-group">
-      <label>⚠️ Key Concerns or Issues</label>
+      <label id="concernsLabel">⚠️ Key Concerns or Issues</label>
       <textarea id="concerns" rows="4" placeholder="What are your main concerns?"></textarea>
     </div>
     
     <div class="form-group">
-      <label>🎯 What outcome or clarification are you requesting?</label>
+      <label id="requestLabel">🎯 What outcome or clarification are you requesting?</label>
       <textarea id="request" rows="3" placeholder="What do you want to achieve?"></textarea>
     </div>
     
@@ -360,6 +396,59 @@ let statementData = {};
 let sessionId = null;
 let expirationTime = null;
 let timerInterval = null;
+
+// Handle matter type change
+function handleMatterChange() {
+  const matter = document.getElementById('matter').value;
+  const landlordFields = document.getElementById('landlordFields');
+  const factsLabel = document.getElementById('factsLabel');
+  const concernsLabel = document.getElementById('concernsLabel');
+  const requestLabel = document.getElementById('requestLabel');
+  const recipientSelect = document.getElementById('recipient');
+  
+  if (matter === 'Landlord / Tenant') {
+    landlordFields.style.display = 'block';
+    factsLabel.innerHTML = '📋 Additional Details (Optional)';
+    concernsLabel.innerHTML = '⚠️ Impact on Your Living Situation';
+    requestLabel.innerHTML = '🎯 Requested Action from Landlord';
+    
+    document.getElementById('facts').placeholder = 'Any additional context or details...';
+    document.getElementById('concerns').placeholder = 'How is this affecting your daily life, health, or safety?';
+    document.getElementById('request').placeholder = 'What specific action do you want your landlord to take?';
+    
+    // Add Landlord option if not present
+    let hasLandlordOption = false;
+    for (let i = 0; i < recipientSelect.options.length; i++) {
+      if (recipientSelect.options[i].value === 'Landlord') {
+        hasLandlordOption = true;
+        break;
+      }
+    }
+    if (!hasLandlordOption) {
+      const option = document.createElement('option');
+      option.value = 'Landlord';
+      option.text = 'Landlord';
+      recipientSelect.add(option);
+    }
+  } else {
+    landlordFields.style.display = 'none';
+    factsLabel.innerHTML = '📅 Chronological Summary of Events (Facts Only)';
+    concernsLabel.innerHTML = '⚠️ Key Concerns or Issues';
+    requestLabel.innerHTML = '🎯 What outcome or clarification are you requesting?';
+    
+    document.getElementById('facts').placeholder = 'Describe the events in chronological order...';
+    document.getElementById('concerns').placeholder = 'What are your main concerns?';
+    document.getElementById('request').placeholder = 'What do you want to achieve?';
+    
+    // Remove Landlord option
+    for (let i = 0; i < recipientSelect.options.length; i++) {
+      if (recipientSelect.options[i].value === 'Landlord') {
+        recipientSelect.remove(i);
+        break;
+      }
+    }
+  }
+}
 
 // Check for active session on load
 window.addEventListener('load', function() {
@@ -529,11 +618,21 @@ function clearSession() {
 function restoreFormData() {
   if (statementData.name) document.getElementById('name').value = statementData.name;
   if (statementData.state) document.getElementById('state').value = statementData.state;
-  if (statementData.matter) document.getElementById('matter').value = statementData.matter;
+  if (statementData.matter) {
+    document.getElementById('matter').value = statementData.matter;
+    handleMatterChange(); // Update form fields based on matter type
+  }
   if (statementData.recipient) document.getElementById('recipient').value = statementData.recipient;
   if (statementData.facts) document.getElementById('facts').value = statementData.facts;
   if (statementData.concerns) document.getElementById('concerns').value = statementData.concerns;
   if (statementData.request) document.getElementById('request').value = statementData.request;
+  
+  // Restore landlord-specific fields if present
+  if (statementData.propertyAddress) document.getElementById('propertyAddress').value = statementData.propertyAddress;
+  if (statementData.leaseStart) document.getElementById('leaseStart').value = statementData.leaseStart;
+  if (statementData.issueType) document.getElementById('issueType').value = statementData.issueType;
+  if (statementData.landlordTimeline) document.getElementById('landlordTimeline').value = statementData.landlordTimeline;
+  if (statementData.documentation) document.getElementById('documentation').value = statementData.documentation;
 }
 
 function editStatement() {
@@ -552,7 +651,48 @@ async function generateStatement() {
   
   statementData = { name, state, matter, recipient, facts, concerns, request };
   
-  const rawStatement = `
+  let rawStatement = "";
+  
+  // Check if landlord/tenant matter
+  if (matter === 'Landlord / Tenant') {
+    const propertyAddress = document.getElementById("propertyAddress").value.trim() || "[Property Address]";
+    const leaseStart = document.getElementById("leaseStart").value || "[Lease Start Date]";
+    const issueType = document.getElementById("issueType").value;
+    const landlordTimeline = document.getElementById("landlordTimeline").value.trim() || "[Timeline of issue]";
+    const documentation = document.getElementById("documentation").value.trim() || "[Documentation available]";
+    
+    statementData.propertyAddress = propertyAddress;
+    statementData.leaseStart = leaseStart;
+    statementData.issueType = issueType;
+    statementData.landlordTimeline = landlordTimeline;
+    statementData.documentation = documentation;
+    
+    rawStatement = `
+Name: ${name}
+State: ${state}
+Matter Type: ${matter}
+Recipient: ${recipient}
+Property Address: ${propertyAddress}
+Lease Start Date: ${leaseStart}
+Issue Type: ${issueType}
+
+TIMELINE OF ISSUE:
+${landlordTimeline}
+
+IMPACT ON LIVING SITUATION:
+${concerns}
+
+DOCUMENTATION AVAILABLE:
+${documentation}
+
+ADDITIONAL DETAILS:
+${facts}
+
+REQUESTED ACTION:
+${request}
+`;
+  } else {
+    rawStatement = `
 Name: ${name}
 State: ${state}
 Matter Type: ${matter}
@@ -567,6 +707,7 @@ ${concerns}
 REQUEST / PURPOSE:
 ${request}
 `;
+  }
 
   document.getElementById("loading").classList.add("active");
   document.getElementById("previewBox").classList.remove("active");
@@ -622,18 +763,37 @@ function displayPreview(text) {
   const lines = text.split('\n');
   let html = '';
   
+  // Add OFFICIAL STATEMENT header
+  html += '<div class="section-title" style="text-align: center; font-size: 18px; margin-bottom: 20px;">OFFICIAL STATEMENT</div>';
+  
   for (let line of lines) {
     line = line.trim();
     line = line.replace(/\*\*/g, '');
     if (!line) continue;
     
+    // Check if line starts with Name:, State:, Matter Type:, or Recipient:
+    const isInfoField = line.startsWith('Name:') || 
+                       line.startsWith('State:') || 
+                       line.startsWith('Matter Type:') || 
+                       line.startsWith('Recipient:') ||
+                       line.startsWith('Property Address:') ||
+                       line.startsWith('Lease Start Date:') ||
+                       line.startsWith('Issue Type:');
+    
     const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
                       line.includes('SUMMARY') || 
                       line.includes('CONCERNS') || 
                       line.includes('REQUEST') ||
-                      line.includes('PURPOSE');
+                      line.includes('PURPOSE') ||
+                      line.includes('TIMELINE') ||
+                      line.includes('IMPACT') ||
+                      line.includes('DOCUMENTATION') ||
+                      line.includes('ADDITIONAL') ||
+                      line.includes('ACTION');
     
-    if (isHeading) {
+    if (isInfoField) {
+      html += `<div class="section-title" style="font-size: 14px;">${escapeHtml(line)}</div>`;
+    } else if (isHeading) {
       html += `<div class="section-title">${escapeHtml(line)}</div>`;
     } else {
       html += `<div class="section-text">${escapeHtml(line)}</div>`;
@@ -672,9 +832,10 @@ function downloadFullPDF() {
   
   let y = margin;
   
+  // Add OFFICIAL STATEMENT header
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("LEGAL STATEMENT", pageWidth / 2, y, { align: "center" });
+  doc.setFontSize(18);
+  doc.text("OFFICIAL STATEMENT", pageWidth / 2, y, { align: "center" });
   y += 15;
   
   doc.setFontSize(11);
@@ -690,19 +851,42 @@ function downloadFullPDF() {
       continue;
     }
     
+    // Check if line is an info field (Name:, State:, etc.)
+    const isInfoField = line.startsWith('Name:') || 
+                       line.startsWith('State:') || 
+                       line.startsWith('Matter Type:') || 
+                       line.startsWith('Recipient:') ||
+                       line.startsWith('Property Address:') ||
+                       line.startsWith('Lease Start Date:') ||
+                       line.startsWith('Issue Type:');
+    
     const isHeading = (line.includes(':') && line.length < 50 && line.toUpperCase() === line) ||
                       line.includes('SUMMARY') || 
                       line.includes('CONCERNS') || 
                       line.includes('REQUEST') ||
                       line.includes('PURPOSE') ||
-                      line.includes('Respectfully');
+                      line.includes('Respectfully') ||
+                      line.includes('TIMELINE') ||
+                      line.includes('IMPACT') ||
+                      line.includes('DOCUMENTATION') ||
+                      line.includes('ADDITIONAL') ||
+                      line.includes('ACTION');
     
     if (y > pageHeight - margin - 20) {
       doc.addPage();
       y = margin;
     }
     
-    if (isHeading) {
+    if (isInfoField) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const wrappedInfo = doc.splitTextToSize(line, maxWidth);
+      doc.text(wrappedInfo, margin, y);
+      y += wrappedInfo.length * 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      y += 2;
+    } else if (isHeading) {
       y += 4;
       doc.setFont("helvetica", "bold");
       const wrappedHeading = doc.splitTextToSize(line, maxWidth);
