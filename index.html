@@ -315,6 +315,12 @@ textarea {
         <label>📸 Documentation Available</label>
         <textarea id="documentation" rows="3" placeholder="List any photos, emails, texts, repair requests, or other documentation you have..."></textarea>
       </div>
+      
+      <div class="form-group">
+        <label>📎 Upload Photos/Documents (Optional)</label>
+        <input type="file" id="fileUpload" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="handleFileUpload()" style="padding: 10px;">
+        <div id="fileList" style="margin-top: 10px; font-size: 13px; color: #666;"></div>
+      </div>
     </div>
     
     <div class="form-group">
@@ -396,6 +402,42 @@ let statementData = {};
 let sessionId = null;
 let expirationTime = null;
 let timerInterval = null;
+let uploadedFiles = [];
+
+// Handle file uploads
+function handleFileUpload() {
+  const fileInput = document.getElementById('fileUpload');
+  const fileList = document.getElementById('fileList');
+  const files = fileInput.files;
+  
+  if (files.length === 0) return;
+  
+  uploadedFiles = [];
+  let fileListHTML = '<strong>Uploaded files:</strong><br>';
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const fileSize = (file.size / 1024).toFixed(2); // KB
+    uploadedFiles.push({
+      name: file.name,
+      size: fileSize,
+      type: file.type
+    });
+    fileListHTML += `• ${file.name} (${fileSize} KB)<br>`;
+  }
+  
+  fileList.innerHTML = fileListHTML;
+  
+  // Auto-populate documentation field
+  const docField = document.getElementById('documentation');
+  if (docField.value.trim() === '') {
+    let docText = 'Attached documentation includes:\n';
+    for (let file of uploadedFiles) {
+      docText += `- ${file.name}\n`;
+    }
+    docField.value = docText;
+  }
+}
 
 // Handle matter type change
 function handleMatterChange() {
@@ -667,6 +709,15 @@ async function generateStatement() {
     statementData.landlordTimeline = landlordTimeline;
     statementData.documentation = documentation;
     
+    // Add file information if files were uploaded
+    let fileInfo = '';
+    if (uploadedFiles.length > 0) {
+      fileInfo = '\n\nATTACHED DOCUMENTATION:\n';
+      for (let file of uploadedFiles) {
+        fileInfo += `- ${file.name} (${file.size} KB)\n`;
+      }
+    }
+    
     rawStatement = `
 Name: ${name}
 State: ${state}
@@ -683,7 +734,7 @@ IMPACT ON LIVING SITUATION:
 ${concerns}
 
 DOCUMENTATION AVAILABLE:
-${documentation}
+${documentation}${fileInfo}
 
 ADDITIONAL DETAILS:
 ${facts}
@@ -788,6 +839,7 @@ function displayPreview(text) {
                       line.includes('TIMELINE') ||
                       line.includes('IMPACT') ||
                       line.includes('DOCUMENTATION') ||
+                      line.includes('ATTACHED') ||
                       line.includes('ADDITIONAL') ||
                       line.includes('ACTION');
     
@@ -869,6 +921,7 @@ function downloadFullPDF() {
                       line.includes('TIMELINE') ||
                       line.includes('IMPACT') ||
                       line.includes('DOCUMENTATION') ||
+                      line.includes('ATTACHED') ||
                       line.includes('ADDITIONAL') ||
                       line.includes('ACTION');
     
